@@ -4,7 +4,6 @@ import { Redirect, router } from "expo-router";
 import { PrimaryButton } from "@/components/primary-button";
 import { MOCK_CODE } from "@/lib/auth-service";
 import { useAuth } from "@/providers/auth-provider";
-import { colors } from "@/theme/colors";
 import { formatPhone, phoneDigits } from "@/utils/phone";
 
 const CODE_LENGTH = 6;
@@ -61,31 +60,25 @@ export default function VerifyScreen() {
 
   return (
     <ScrollView
-      style={{ flex: 1, backgroundColor: colors.systemBackground }}
+      className="flex-1 bg-white dark:bg-black"
+      contentContainerClassName="w-full max-w-[440px] self-center gap-7 p-6"
       contentInsetAdjustmentBehavior="automatic"
-      contentContainerStyle={{
-        padding: 24,
-        gap: 28,
-        width: "100%",
-        maxWidth: 440,
-        alignSelf: "center",
-      }}
       keyboardShouldPersistTaps="handled"
       automaticallyAdjustKeyboardInsets
     >
-      <View style={{ gap: 6 }}>
-        <Text style={{ fontSize: 16, color: colors.secondaryLabel }}>We texted a code to</Text>
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-          <Text selectable style={{ fontSize: 17, fontWeight: "600", color: colors.label }}>
+      <View className="gap-1.5">
+        <Text className="text-base text-zinc-500 dark:text-zinc-400">We texted a code to</Text>
+        <View className="flex-row flex-wrap items-center gap-3">
+          <Text selectable className="text-[17px] font-semibold text-zinc-950 dark:text-zinc-50">
             +1 {formatPhone(phoneDigits(pending.phone))}
           </Text>
           <Pressable accessibilityRole="button" onPress={() => router.back()} hitSlop={8}>
-            <Text style={{ fontSize: 15, color: colors.brand, fontWeight: "600" }}>Change</Text>
+            <Text className="text-[15px] font-semibold text-brand">Change</Text>
           </Pressable>
         </View>
       </View>
 
-      <View style={{ gap: 8 }}>
+      <View className="gap-2">
         <TextInput
           value={code}
           onChangeText={(text) => {
@@ -95,7 +88,7 @@ export default function VerifyScreen() {
             if (next.length === CODE_LENGTH) submit(next);
           }}
           placeholder="••••••"
-          placeholderTextColor={colors.tertiaryLabel}
+          placeholderTextColor="#A1A1AA"
           keyboardType="number-pad"
           textContentType="oneTimeCode"
           autoComplete={Platform.select({ android: "sms-otp", default: "one-time-code" })}
@@ -103,30 +96,20 @@ export default function VerifyScreen() {
           autoFocus
           editable={!loading}
           accessibilityLabel="6-digit verification code"
-          style={{
-            height: 64,
-            borderRadius: 14,
-            borderCurve: "continuous",
-            backgroundColor: colors.fieldBackground,
-            borderWidth: error ? 1 : 0,
-            borderColor: colors.error,
-            textAlign: "center",
-            fontSize: 28,
-            fontWeight: "600",
-            letterSpacing: 12,
-            fontVariant: ["tabular-nums"],
-            color: colors.label,
-          }}
+          className={`h-16 rounded-2xl bg-zinc-100 text-center text-[28px] font-semibold tracking-[12px] text-zinc-950 dark:bg-zinc-900 dark:text-zinc-50 ${
+            error ? "border border-red-600 dark:border-red-400" : ""
+          }`}
+          style={{ borderCurve: "continuous", fontVariant: ["tabular-nums"] }}
         />
         {error ? (
-          <Text selectable style={{ fontSize: 14, color: colors.error }}>
+          <Text selectable className="text-sm text-red-600 dark:text-red-400">
             {error}
           </Text>
         ) : notice ? (
-          <Text style={{ fontSize: 14, color: colors.secondaryLabel }}>{notice}</Text>
+          <Text className="text-sm text-zinc-500 dark:text-zinc-400">{notice}</Text>
         ) : null}
         {__DEV__ && (
-          <Text style={{ fontSize: 13, color: colors.tertiaryLabel }}>
+          <Text className="text-[13px] text-zinc-400 dark:text-zinc-500">
             Test mode: use code {MOCK_CODE}
           </Text>
         )}
@@ -139,21 +122,17 @@ export default function VerifyScreen() {
         loading={loading}
       />
 
-      <View style={{ alignItems: "center" }}>
+      <View className="items-center">
         {seconds > 0 ? (
-          <Text style={{ fontSize: 15, color: colors.secondaryLabel, fontVariant: ["tabular-nums"] }}>
+          <Text
+            className="text-[15px] text-zinc-500 dark:text-zinc-400"
+            style={{ fontVariant: ["tabular-nums"] }}
+          >
             Resend code in {seconds}s
           </Text>
         ) : (
           <Pressable accessibilityRole="button" onPress={resend} disabled={resending} hitSlop={8}>
-            <Text
-              style={{
-                fontSize: 15,
-                fontWeight: "600",
-                color: colors.brand,
-                opacity: resending ? 0.5 : 1,
-              }}
-            >
+            <Text className={`text-[15px] font-semibold text-brand ${resending ? "opacity-50" : ""}`}>
               {resending ? "Sending…" : "Resend code"}
             </Text>
           </Pressable>

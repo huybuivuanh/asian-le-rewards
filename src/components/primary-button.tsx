@@ -1,5 +1,4 @@
 import { ActivityIndicator, Pressable, Text } from "react-native";
-import { colors } from "@/theme/colors";
 
 type Props = {
   title: string;
@@ -16,20 +15,15 @@ export function PrimaryButton({ title, onPress, disabled, loading }: Props) {
       accessibilityState={{ disabled: inactive, busy: loading }}
       disabled={inactive}
       onPress={onPress}
-      style={({ pressed }) => ({
-        height: 52,
-        borderRadius: 14,
-        borderCurve: "continuous",
-        backgroundColor: colors.brand,
-        alignItems: "center",
-        justifyContent: "center",
-        opacity: inactive ? 0.45 : pressed ? 0.8 : 1,
-      })}
+      className={`h-[52px] items-center justify-center rounded-2xl bg-brand active:opacity-80 ${
+        inactive ? "opacity-40" : ""
+      }`}
+      style={{ borderCurve: "continuous" }}
     >
       {loading ? (
-        <ActivityIndicator color={colors.onBrand} />
+        <ActivityIndicator color="#FFFFFF" />
       ) : (
-        <Text style={{ color: colors.onBrand, fontSize: 17, fontWeight: "600" }}>{title}</Text>
+        <Text className="text-[17px] font-semibold text-white">{title}</Text>
       )}
     </Pressable>
   );
