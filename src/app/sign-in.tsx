@@ -1,38 +1,59 @@
 import { useState } from "react";
-import { ScrollView, Text, TextInput, View } from "react-native";
+import { Keyboard, Pressable, ScrollView, Text, View } from "react-native";
 import { Image } from "expo-image";
-import { router } from "expo-router";
+import { Link } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { PrimaryButton } from "@/components/primary-button";
-import { useAuth } from "@/providers/auth-provider";
-import { formatPhone, isValidPhone, phoneDigits, toE164 } from "@/utils/phone";
+import { resetPassword, signIn } from "@/services/authService";
+import { PrimaryButton } from "@/ui/PrimaryButton";
+import { TextField } from "@/ui/TextField";
+import { authErrorMessage } from "@/utils/authErrors";
 
 export default function SignInScreen() {
-  const { sendCode } = useAuth();
   const insets = useSafeAreaInsets();
-  const [digits, setDigits] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
-  const valid = isValidPhone(digits);
+  const canSubmit = email.trim().length > 0 && password.length > 0 && !loading;
+
+  const clearMessages = () => {
+    setError(null);
+    setNotice(null);
+  };
 
   const submit = async () => {
-    if (!valid || loading) return;
-    setError(null);
+    if (!canSubmit) return;
+    Keyboard.dismiss();
+    clearMessages();
     setLoading(true);
     try {
-      await sendCode(toE164(digits));
-      router.push("/verify");
+      // On success the protected route guard moves to the app automatically.
+      await signIn(email, password);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Couldn't send the code. Please try again.");
-    } finally {
+      setError(authErrorMessage(e, "Sign in failed. Please try again."));
       setLoading(false);
+    }
+  };
+
+  const forgotPassword = async () => {
+    clearMessages();
+    if (!email.trim()) {
+      setError("Enter your email above, then tap Forgot password.");
+      return;
+    }
+    try {
+      await resetPassword(email);
+      setNotice(`If an account exists for ${email.trim()}, we sent a link to reset the password.`);
+    } catch (e) {
+      setError(authErrorMessage(e, "Couldn't send the reset email. Please try again."));
     }
   };
 
   return (
     <ScrollView
-      className="flex-1 bg-white dark:bg-black"
+      className="flex-1 bg-white"
       contentContainerClassName="w-full max-w-[440px] self-center gap-8 px-6"
       contentContainerStyle={{ paddingTop: insets.top + 48, paddingBottom: insets.bottom + 24 }}
       keyboardShouldPersistTaps="handled"
@@ -45,57 +66,71 @@ export default function SignInScreen() {
           contentFit="contain"
           accessibilityLabel="Asian Le logo"
         />
-        <Text className="text-[28px] font-bold text-zinc-950 dark:text-zinc-50">
-          Asian Le Rewards
-        </Text>
-        <Text className="text-center text-base text-zinc-500 dark:text-zinc-400">
+        <Text className="text-[28px] font-bold text-zinc-950">Asian Le Rewards</Text>
+        <Text className="text-center text-base text-zinc-500">
           Earn points every time you eat with us.
         </Text>
       </View>
 
-      <View className="gap-2">
-        <Text className="text-[15px] font-semibold text-zinc-950 dark:text-zinc-50">
-          Phone number
-        </Text>
-        <View
-          className={`h-[52px] flex-row items-center gap-2.5 rounded-2xl bg-zinc-100 px-4 dark:bg-zinc-900 ${
-            error ? "border border-red-600 dark:border-red-400" : ""
-          }`}
-          style={{ borderCurve: "continuous" }}
-        >
-          <Text className="text-[17px] text-zinc-500 dark:text-zinc-400">+1</Text>
-          <View className="h-[22px] w-px bg-zinc-300 dark:bg-zinc-700" />
-          <TextInput
-            value={formatPhone(digits)}
-            onChangeText={(text) => {
-              setDigits(phoneDigits(text));
-              if (error) setError(null);
-            }}
-            onSubmitEditing={submit}
-            placeholder="(604) 555-1234"
-            placeholderTextColor="#A1A1AA"
-            keyboardType="phone-pad"
-            textContentType="telephoneNumber"
-            autoComplete="tel"
-            returnKeyType="done"
-            autoFocus
-            editable={!loading}
-            accessibilityLabel="Phone number"
-            className="h-full flex-1 text-[17px] text-zinc-950 dark:text-zinc-50"
-          />
-        </View>
+      <View className="gap-4">
+        <TextField
+          label="Email"
+          value={email}
+          onChangeText={(t) => {
+            setEmail(t);
+            clearMessages();
+          }}
+          placeholder="you@example.com"
+          keyboardType="email-address"
+          textContentType="emailAddress"
+          autoComplete="email"
+          returnKeyType="next"
+          editable={!loading}
+          invalid={!!error}
+        />
+        <TextField
+          label="Password"
+          password
+          value={password}
+          onChangeText={(t) => {
+            setPassword(t);
+            clearMessages();
+          }}
+          placeholder="••••••••"
+          textContentType="password"
+          autoComplete="current-password"
+          returnKeyType="go"
+          onSubmitEditing={submit}
+          editable={!loading}
+          invalid={!!error}
+        />
+
         {error ? (
-          <Text selectable className="text-sm text-red-600 dark:text-red-400">
+          <Text selectable className="text-sm text-red-600" accessibilityRole="alert">
             {error}
           </Text>
-        ) : (
-          <Text className="text-[13px] text-zinc-500 dark:text-zinc-400">
-            We'll text you a 6-digit code. Message and data rates may apply.
-          </Text>
-        )}
+        ) : notice ? (
+          <Text className="text-sm text-zinc-500">{notice}</Text>
+        ) : null}
+
+        <Pressable
+          accessibilityRole="button"
+          onPress={forgotPassword}
+          hitSlop={8}
+          className="self-end"
+        >
+          <Text className="text-[15px] font-semibold text-brand">Forgot password?</Text>
+        </Pressable>
       </View>
 
-      <PrimaryButton title="Send code" onPress={submit} disabled={!valid} loading={loading} />
+      <PrimaryButton title="Sign in" onPress={submit} disabled={!canSubmit} loading={loading} />
+
+      <View className="flex-row justify-center gap-1.5">
+        <Text className="text-[15px] text-zinc-500">New here?</Text>
+        <Link href="/sign-up" replace>
+          <Text className="text-[15px] font-semibold text-brand">Create an account</Text>
+        </Link>
+      </View>
     </ScrollView>
   );
 }

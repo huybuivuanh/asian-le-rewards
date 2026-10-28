@@ -11,8 +11,10 @@ scans the QR to collect and redeem points.
       (was locked by VS Code / expo — close both, then rename)
 - [x] App renamed in `app.json` (name "Asian Le Rewards", slug `asian-le-rewards`, scheme `asianlerewards`)
 - [x] NativeWind 4.2.7 + Tailwind 3 (same as POS)
-- [x] Sign-in UI: phone number → 6-digit code → home (mock auth, code `123456`)
-- [ ] **App still shows errors on web — paste them in the next session**
+- [x] Web "Metro error: This operation was aborted" — harmless (cancelled server render on reload)
+- [x] Light theme only
+- [x] Firebase email + password auth (sign in, create account, forgot password) — JS SDK, same as POS
+- [ ] Create the loyalty Firebase project, enable Email/Password sign-in, fill `.env`
 - [ ] Nothing committed yet
 
 ## Decisions
@@ -27,7 +29,7 @@ scans the QR to collect and redeem points.
 | When to earn | Any time after the order, **once per order**; POS marks the order as collected |
 | Redeem | Fixed steps: 100 pts = $5 off, applied as the POS's existing Amount discount |
 | Cancelled order | Points automatically reversed (earned removed, redeemed refunded) |
-| Customer sign-up | Self sign-up in the app or website, phone number + SMS code |
+| Customer sign-up | Self sign-up in the app or website, email + password (same as POS; no SMS / Blaze needed for auth) |
 | Scanning | Device camera |
 | Customer display | Shows "Scan your loyalty QR" and "+N points earned" |
 
@@ -96,13 +98,11 @@ memberCodes/{code}                 uid   (unique codes + fast lookup)
 0. **Lock down the POS Firebase project** (do first)
    - Authentication → Settings → User actions → turn **off** "Enable create (sign-up)"
    - Review Firestore rules (no rules file in the POS repo yet) and track them in the repo
-1. **Loyalty Firebase project**: create it, Blaze plan (needed for functions + SMS),
-   phone auth, Firestore, `pos@asianle.com` + `role: pos` script, security rules
+1. **Loyalty Firebase project**: create it, Blaze plan (needed for functions),
+   Email/Password auth, Firestore, `pos@asianle.com` + `role: pos` script, security rules
 2. **Cloud Functions** (table above), tested with emulators
-3. **Customer app** (this repo): sign-in ✅ (mock) → name on first sign-in → home
-   (points + QR) → history. Swap `src/lib/auth-service.ts` for Firebase.
-   - ⚠️ Phone sign-in on iOS/Android needs `@react-native-firebase/auth` → development
-     build, not Expo Go. Web works with the JS SDK.
+3. **Customer app** (this repo): sign-in ✅ (Firebase email) → name + phone on first
+   sign-in (phone is for POS search, not verified) → home (points + QR) → history.
 4. **POS integration**
    - Second Firebase connection + Loyalty section in Profile
    - `src/services/loyaltyService.ts` wrapping the functions
@@ -122,10 +122,16 @@ memberCodes/{code}                 uid   (unique codes + fast lookup)
 ## Notes on this repo
 
 - Expo SDK 58, routes in `src/app`, alias `@/*` → `src/*`
-- Auth: `src/providers/auth-provider.tsx` + mock `src/lib/auth-service.ts`
-  (only that file changes when wiring Firebase). Screens guarded with `Stack.Protected`.
+- Structure follows POS: `src/lib/firebaseConfig.ts`, `src/providers/AuthProvider.tsx`,
+  `src/services/`, `src/ui/`, `src/utils/`.
+- Auth: Firebase JS SDK email + password on all platforms (works in Expo Go).
+  `src/lib/firebaseConfig.ts` (AsyncStorage persistence on native) →
+  `src/services/authService.ts` (signIn / signUp / resetPassword / signOutUser) →
+  `src/providers/AuthProvider.tsx` (user, loading, logout). Screens: `sign-in`, `sign-up`,
+  guarded with `Stack.Protected`. Config: `EXPO_PUBLIC_FIREBASE_*` in `.env` (see `.env.example`).
+- `tsconfig.json` maps `@firebase/auth` to its React Native types (same as POS) so
+  `getReactNativePersistence` type-checks.
 - Styling: NativeWind classes; brand color `brand` (#DA251D, logo red) in `tailwind.config.js`.
-- Dark mode: `darkMode: "class"` because NativeWind 4 throws on web with the default
-  `"media"`. `useWebDarkClass()` in `src/app/_layout.tsx` keeps web following the system.
-  Header/background colors come from React Navigation themes in the root layout.
+- Light theme only (`userInterfaceStyle: "light"`). Header/background colors come from the
+  React Navigation theme in the root layout.
 - After config changes, start with a cleared cache: `npx expo start -c`

@@ -1,45 +1,26 @@
 import "../../global.css";
 
 import { useEffect } from "react";
-import { useColorScheme } from "react-native";
 import { Stack } from "expo-router";
-import { DarkTheme, DefaultTheme, ThemeProvider } from "expo-router/react-navigation";
-import { AuthProvider, useAuth } from "@/providers/auth-provider";
+import { DefaultTheme, ThemeProvider } from "expo-router/react-navigation";
+import * as SplashScreen from "expo-splash-screen";
+import { StatusBar } from "expo-status-bar";
+import { AuthProvider, useAuth } from "@/providers/AuthProvider";
 
-// Header + screen background colors, matched to bg-white / dark:bg-black and the brand red.
-const lightTheme = {
+// Keep the splash up until Firebase restores the saved login, so signed-in
+// customers don't see the sign-in screen flash on launch.
+SplashScreen.preventAutoHideAsync();
+
+// Light only. Header + screen background match bg-white and the brand red.
+const theme = {
   ...DefaultTheme,
   colors: { ...DefaultTheme.colors, primary: "#DA251D", background: "#FFFFFF", card: "#FFFFFF" },
 };
-const darkTheme = {
-  ...DarkTheme,
-  colors: { ...DarkTheme.colors, primary: "#DA251D", background: "#000000", card: "#000000" },
-};
-
-// Web: dark: classes only apply when <html> has the "dark" class, so follow the system.
-// NativeWind strips that class once when its styles load, so re-apply on any change.
-function useWebDarkClass() {
-  const scheme = useColorScheme();
-  useEffect(() => {
-    if (process.env.EXPO_OS !== "web") return;
-    const root = document.documentElement;
-    const wantDark = scheme === "dark";
-    const apply = () => {
-      if (root.classList.contains("dark") !== wantDark) root.classList.toggle("dark", wantDark);
-    };
-    apply();
-    const observer = new MutationObserver(apply);
-    observer.observe(root, { attributes: true, attributeFilter: ["class"] });
-    return () => observer.disconnect();
-  }, [scheme]);
-}
 
 export default function RootLayout() {
-  const scheme = useColorScheme();
-  useWebDarkClass();
-
   return (
-    <ThemeProvider value={scheme === "dark" ? darkTheme : lightTheme}>
+    <ThemeProvider value={theme}>
+      <StatusBar style="dark" />
       <AuthProvider>
         <RootNavigator />
       </AuthProvider>
@@ -48,18 +29,24 @@ export default function RootLayout() {
 }
 
 function RootNavigator() {
-  const { session } = useAuth();
+  const { user, loading } = useAuth();
+
+  useEffect(() => {
+    if (!loading) SplashScreen.hideAsync();
+  }, [loading]);
+
+  if (loading) return null;
 
   return (
     <Stack screenOptions={{ headerBackButtonDisplayMode: "minimal", headerShadowVisible: false }}>
       {/* Signed out: only the sign-in flow is reachable */}
-      <Stack.Protected guard={!session}>
-        <Stack.Screen name="sign-in" options={{ headerShown: false }} />
-        <Stack.Screen name="verify" options={{ title: "Enter code" }} />
+      <Stack.Protected guard={!user}>
+        <Stack.Screen name="sign-in" options={{ headerShown: false, animation: "fade" }} />
+        <Stack.Screen name="sign-up" options={{ headerShown: false, animation: "fade" }} />
       </Stack.Protected>
 
       {/* Signed in: the main app */}
-      <Stack.Protected guard={!!session}>
+      <Stack.Protected guard={!!user}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       </Stack.Protected>
     </Stack>

@@ -5,8 +5,12 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "scheme": "asianlerewards",
-    "userInterfaceStyle": "automatic",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "bundleIdentifier": "com.buivuanhhuy.AsianLeRewards"
+    },
     "android": {
+      "package": "com.buivuanhhuy.AsianLeRewards",
       "predictiveBackGestureEnabled": false
     },
     "web": {

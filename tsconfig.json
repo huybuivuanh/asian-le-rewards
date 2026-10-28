@@ -3,6 +3,10 @@
   "compilerOptions": {
     "strict": true,
     "paths": {
+      // Firebase's React Native types (adds getReactNativePersistence), same as POS.
+      "@firebase/auth": [
+        "./node_modules/@firebase/auth/dist/index.rn.d.ts"
+      ],
       "@/*": [
         "./src/*"
       ]

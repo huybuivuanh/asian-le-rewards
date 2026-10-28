@@ -2,8 +2,8 @@
 module.exports = {
   content: ["./src/**/*.{js,ts,jsx,tsx}"],
   presets: [require("nativewind/preset")],
-  // "class" instead of the default "media": NativeWind 4 throws on web with "media".
-  // Native still follows the system; on web, useWebDarkClass() mirrors it.
+  // App is light only (no dark: classes). "class" instead of the default "media"
+  // because NativeWind 4 throws on web with "media".
   darkMode: "class",
   theme: {
     extend: {
