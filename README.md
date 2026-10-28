@@ -1,4 +1,4 @@
-# asian-le-customers
+# asian-le-rewards
 
 Expo app using Expo Router.
 

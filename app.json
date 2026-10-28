@@ -1,10 +1,10 @@
 {
   "expo": {
-    "name": "asian-le-customers",
-    "slug": "asian-le-customers",
+    "name": "Asian Le Rewards",
+    "slug": "asian-le-rewards",
     "version": "1.0.0",
     "orientation": "portrait",
-    "scheme": "asianlecustomers",
+    "scheme": "asianlerewards",
     "userInterfaceStyle": "automatic",
     "android": {
       "predictiveBackGestureEnabled": false
@@ -12,7 +12,11 @@
     "web": {
       "output": "server"
     },
-    "plugins": ["expo-router", "expo-splash-screen"],
+    "plugins": [
+      "expo-router",
+      "expo-splash-screen",
+      "expo-image"
+    ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
