@@ -11,5 +11,7 @@ declare global {
     /** 10 digits, no formatting (see utils/phone). Unique: reserved in phoneNumbers/{phone}. */
     phone: string;
     createdAt: Timestamp;
+    /** Balance. 0 at sign-up; after that only Cloud Functions change it. */
+    points: number;
   }
 }

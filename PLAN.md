@@ -11,14 +11,13 @@ scans the QR to collect and redeem points.
       (was locked by VS Code / expo — close both, then rename)
 - [x] App renamed in `app.json` (name "Asian Le Rewards", slug `asian-le-rewards`, scheme `asianlerewards`)
 - [x] NativeWind 4.2.7 + Tailwind 3 (same as POS)
-- [x] Web "Metro error: This operation was aborted" — harmless (cancelled server render on reload)
+- [x] Web "Metro error: This operation was aborted" — came from `web.output: "server"`; switched to `"single"` (plain single-page app, no API routes needed)
 - [x] Light theme only
 - [x] Firebase email + password auth (sign in, create account, forgot password) — JS SDK, same as POS
 - [ ] Create the loyalty Firebase project, enable Email/Password + Google sign-in, fill `.env`
 - [x] "Continue with Google" on sign-in and sign-up — code done (`src/services/googleSignIn.ts`
       native, `googleSignIn.web.ts` web, `src/ui/GoogleButton.tsx`, `app.config.ts` adds the iOS URL scheme)
 - [ ] Google one-time setup (below), fill the `EXPO_PUBLIC_GOOGLE_*` values in `.env`, make a development build
-- [ ] Nothing committed yet
 - [x] Sign-up asks for name + phone and writes `members/{uid}` (rolled back if the save fails)
 - [x] "Finish your profile" screen when signed in but the member doc is missing
 - [x] `firestore.rules` written (paste into the console until the repo has `firebase.json`)
@@ -29,7 +28,7 @@ scans the QR to collect and redeem points.
 | Topic | Decision |
 |---|---|
 | Projects | Separate Firebase project for loyalty (customers isolated from POS) |
-| QR code | Fixed QR containing a random `memberCode` — **not** the Firebase uid |
+| QR code | The member's uid (`members/{uid}` doc id). A uid isn't a secret (rules check the signed-in user), the QR is shown live in the app so it can change later, and staff can fall back to phone search |
 | Member lookup at POS | Scan QR, or search by phone (members are separate from POS `customers`) |
 | Earn rate | 1 point per $1 of pre-tax subtotal |
 | Who earns | Dine-in and take-out |
@@ -81,12 +80,12 @@ export const loyaltyFunctions = getFunctions(loyaltyApp);
 - Rules are in `firestore.rules`. Anything not listed there is denied.
 - Customers can **read** their own member doc and history.
 - Customers can **create** their own member doc once (`id`, `name`, `email`, `phone`,
-  `createdAt` only; `email` must match their login) and later change only `name`.
+  `createdAt`, `points` only; `email` must match their login, `points` must be 0) and later change only `name`.
 - **One phone per account:** the member doc and `phoneNumbers/{phone}` are written in one
   batch. Rules require both, and writing over an existing phone doc is denied, so a taken
   number fails ("This phone number is already used by another account."). Customers can't
   read `phoneNumbers`. Changing phone isn't supported yet (it would need to move the reservation).
-- `points`, `memberCode`, `memberCodes/` and `transactions/` are written only by functions
+- After sign-up, `points` and `transactions/` are written only by functions
   (the Admin SDK skips rules). Customers can't touch them.
 
 ## Google sign-in
@@ -125,10 +124,10 @@ usually accepted. If a reviewer asks for Sign in with Apple, add it **on iOS onl
 ## Data model (loyalty project)
 
 ```
-members/{uid}                      id (= uid), name, email, phone, createdAt   ← app (sign-up)
-                                   memberCode, points                          ← functions
+members/{uid}                      id (= uid), name, email, phone, createdAt,
+                                   points (0 at sign-up)                       ← app (sign-up)
+                                   points after that                           ← functions only
 members/{uid}/transactions/{id}    type (earn | redeem | reverse), points, orderId, createdAt
-memberCodes/{code}                 uid   (unique codes + fast lookup)
 phoneNumbers/{phone}               uid   (one phone per member + POS phone lookup) ← app (sign-up)
 ```
 
@@ -143,10 +142,10 @@ phoneNumbers/{phone}               uid   (one phone per member + POS phone looku
 
 | Function | Caller | Does |
 |---|---|---|
-| `onMemberCreated` | Firestore trigger on `members/{uid}` | Add random `memberCode` + `memberCodes/{code}`, `points: 0` |
-| `lookupMember(code or phone)` | POS | Name, balance (phone → `phoneNumbers/{phone}` → member) |
-| `earnPoints(code, orderId, subtotal)` | POS | 1 pt/$1, once per order |
-| `redeemPoints(code, orderId, steps)` | POS | −100 pts per $5 step, returns $ amount |
+| `deleteAccount()` | customer | Re-checks the caller, deletes `members/{uid}` + its `transactions`, `phoneNumbers/{phone}`, then the login. Runs on the server so it finishes even if the app closes, and the rules stay delete-free |
+| `lookupMember(uid or phone)` | POS | Name, balance (QR → `members/{uid}`; phone → `phoneNumbers/{phone}` → member) |
+| `earnPoints(uid, orderId, subtotal)` | POS | 1 pt/$1, once per order |
+| `redeemPoints(uid, orderId, steps)` | POS | −100 pts per $5 step, returns $ amount |
 | `reverseOrder(orderId)` | POS | Refund redeemed points, remove earned points |
 
 ## Phases

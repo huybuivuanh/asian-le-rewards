@@ -24,6 +24,7 @@ export async function createMember(user: User, { name, phone }: MemberDetails): 
     email: user.email ?? "",
     phone: digits,
     createdAt: Timestamp.now(),
+    points: 0,
   };
 
   const batch = writeBatch(db);

@@ -28,8 +28,9 @@ service cloud.firestore {
 
       // Created by the app on sign-up (or "Finish your profile").
       allow create: if isOwner(uid)
-        && request.resource.data.keys().hasOnly(['id', 'name', 'email', 'phone', 'createdAt'])
-        && request.resource.data.keys().hasAll(['id', 'name', 'email', 'phone', 'createdAt'])
+        && request.resource.data.keys().hasOnly(['id', 'name', 'email', 'phone', 'createdAt', 'points'])
+        && request.resource.data.keys().hasAll(['id', 'name', 'email', 'phone', 'createdAt', 'points'])
+        && request.resource.data.points == 0
         && request.resource.data.id == uid
         && request.resource.data.email == request.auth.token.email
         && validName(request.resource.data)
