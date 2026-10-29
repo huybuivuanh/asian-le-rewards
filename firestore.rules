@@ -1,0 +1,67 @@
+rules_version = '2';
+
+// Loyalty project. Anything not matched below is denied.
+// Cloud Functions use the Admin SDK, which skips these rules, so points,
+// member codes and transactions are written only by functions.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    function validName(data) {
+      return data.name is string && data.name.size() > 0 && data.name.size() <= 100;
+    }
+
+    // 10 digits, no formatting (the app normalizes before saving).
+    function validPhone(data) {
+      return data.phone is string && data.phone.matches('^[0-9]{10}$');
+    }
+
+    match /members/{uid} {
+      allow read: if isOwner(uid);
+
+      // Created by the app on sign-up (or "Finish your profile").
+      allow create: if isOwner(uid)
+        && request.resource.data.keys().hasOnly(['id', 'name', 'email', 'phone', 'createdAt'])
+        && request.resource.data.keys().hasAll(['id', 'name', 'email', 'phone', 'createdAt'])
+        && request.resource.data.id == uid
+        && request.resource.data.email == request.auth.token.email
+        && validName(request.resource.data)
+        && validPhone(request.resource.data)
+        && request.resource.data.createdAt is timestamp
+        // The phone must be reserved for this member in the same batch.
+        && getAfter(/databases/$(database)/documents/phoneNumbers/$(request.resource.data.phone)).data.uid == uid;
+
+      // Customers may only change their name. (Changing phone would also need to
+      // move the phoneNumbers reservation; not supported yet.)
+      allow update: if isOwner(uid)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name'])
+        && validName(request.resource.data);
+
+      allow delete: if false;
+
+      // Points history: read your own, written only by functions.
+      match /transactions/{transactionId} {
+        allow read: if isOwner(uid);
+        allow write: if false;
+      }
+    }
+
+    // One doc per phone number, so a phone can belong to one member only.
+    // Created together with members/{uid}. Writing over an existing one counts
+    // as an update, which is denied, so a taken number can't be claimed again.
+    // No reads: customers can't look up whose number is whose.
+    match /phoneNumbers/{phone} {
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['uid'])
+        && request.resource.data.uid == request.auth.uid
+        && getAfter(/databases/$(database)/documents/members/$(request.auth.uid)).data.phone == phone;
+    }
+  }
+}

@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { Keyboard, Pressable, ScrollView, Text, View } from "react-native";
-import { Image } from "expo-image";
 import { Link } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { resetPassword, signIn } from "@/services/authService";
+import { BrandHeader } from "@/ui/BrandHeader";
+import { GoogleButton, OrDivider } from "@/ui/GoogleButton";
 import { PrimaryButton } from "@/ui/PrimaryButton";
 import { TextField } from "@/ui/TextField";
 import { authErrorMessage } from "@/utils/authErrors";
@@ -13,10 +14,11 @@ export default function SignInScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [googleBusy, setGoogleBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
-  const canSubmit = email.trim().length > 0 && password.length > 0 && !loading;
+  const canSubmit = email.trim().length > 0 && password.length > 0 && !loading && !googleBusy;
 
   const clearMessages = () => {
     setError(null);
@@ -54,25 +56,23 @@ export default function SignInScreen() {
   return (
     <ScrollView
       className="flex-1 bg-white"
-      contentContainerClassName="w-full max-w-[440px] self-center gap-8 px-6"
-      contentContainerStyle={{ paddingTop: insets.top + 48, paddingBottom: insets.bottom + 24 }}
+      contentContainerClassName="w-full max-w-[440px] grow justify-center self-center gap-8 px-6"
+      contentContainerStyle={{ paddingTop: insets.top + 24, paddingBottom: insets.bottom + 24 }}
       keyboardShouldPersistTaps="handled"
       automaticallyAdjustKeyboardInsets
     >
-      <View className="items-center gap-3">
-        <Image
-          source={require("../../assets/images/logo.png")}
-          style={{ width: 56, height: 104 }}
-          contentFit="contain"
-          accessibilityLabel="Asian Le logo"
-        />
-        <Text className="text-[28px] font-bold text-zinc-950">Asian Le Rewards</Text>
-        <Text className="text-center text-base text-zinc-500">
-          Earn points every time you eat with us.
-        </Text>
-      </View>
+      <BrandHeader subtitle="Earn points every time you eat with us." />
 
       <View className="gap-4">
+        <GoogleButton
+          disabled={loading}
+          onBusyChange={setGoogleBusy}
+          onError={(message) => {
+            setNotice(null);
+            setError(message);
+          }}
+        />
+        <OrDivider />
         <TextField
           label="Email"
           value={email}

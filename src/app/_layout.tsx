@@ -29,7 +29,7 @@ export default function RootLayout() {
 }
 
 function RootNavigator() {
-  const { user, loading } = useAuth();
+  const { user, member, loading } = useAuth();
 
   useEffect(() => {
     if (!loading) SplashScreen.hideAsync();
@@ -45,8 +45,13 @@ function RootNavigator() {
         <Stack.Screen name="sign-up" options={{ headerShown: false, animation: "fade" }} />
       </Stack.Protected>
 
-      {/* Signed in: the main app */}
-      <Stack.Protected guard={!!user}>
+      {/* Signed in but no member doc (interrupted sign-up): finish the profile */}
+      <Stack.Protected guard={!!user && !member}>
+        <Stack.Screen name="complete-profile" options={{ headerShown: false, animation: "fade" }} />
+      </Stack.Protected>
+
+      {/* Signed in with a member doc: the main app */}
+      <Stack.Protected guard={!!user && !!member}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       </Stack.Protected>
     </Stack>

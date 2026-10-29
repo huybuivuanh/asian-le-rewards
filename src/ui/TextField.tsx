@@ -6,9 +6,11 @@ type Props = TextInputProps & {
   /** Adds a Show/Hide toggle and hides the text by default. */
   password?: boolean;
   invalid?: boolean;
+  /** Small note shown under the field. */
+  hint?: string;
 };
 
-export function TextField({ label, password, invalid, ...input }: Props) {
+export function TextField({ label, password, invalid, hint, ...input }: Props) {
   const [hidden, setHidden] = useState(true);
 
   return (
@@ -42,6 +44,9 @@ export function TextField({ label, password, invalid, ...input }: Props) {
           </Pressable>
         )}
       </View>
+      {hint && (
+        <Text className={`text-[13px] ${invalid ? "text-red-600" : "text-zinc-500"}`}>{hint}</Text>
+      )}
     </View>
   );
 }

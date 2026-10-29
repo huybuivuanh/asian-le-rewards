@@ -1,33 +1,52 @@
-import { signUp } from "@/services/authService";
+import { useAuth } from "@/providers/AuthProvider";
+import { BrandHeader } from "@/ui/BrandHeader";
+import { GoogleButton, OrDivider } from "@/ui/GoogleButton";
 import { PrimaryButton } from "@/ui/PrimaryButton";
 import { TextField } from "@/ui/TextField";
-import { authErrorMessage } from "@/utils/authErrors";
+import { authErrorMessage, isPhoneError } from "@/utils/authErrors";
+import { MIN_PASSWORD, PASSWORD_HINT, passwordError } from "@/utils/password";
+import { normalizePhone, PHONE_HINT } from "@/utils/phone";
 import { Link } from "expo-router";
 import { useState } from "react";
 import { Keyboard, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-const MIN_PASSWORD = 9; // Firebase's default minimum
-
 export default function SignUpScreen() {
   const insets = useSafeAreaInsets();
+  const { signUp } = useAuth();
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [loading, setLoading] = useState(false);
+  const [googleBusy, setGoogleBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Turns the password hint red when the password is what failed.
+  const [passwordInvalid, setPasswordInvalid] = useState(false);
+  const [phoneInvalid, setPhoneInvalid] = useState(false);
 
   const canSubmit =
+    name.trim().length > 0 &&
+    phone.trim().length > 0 &&
     email.trim().length > 0 &&
     password.length > 0 &&
     confirm.length > 0 &&
-    !loading;
+    !loading &&
+    !googleBusy;
 
   const submit = async () => {
     if (!canSubmit) return;
     Keyboard.dismiss();
-    if (password.length < MIN_PASSWORD) {
-      setError(`Password must be at least ${MIN_PASSWORD} characters.`);
+    if (!normalizePhone(phone)) {
+      setError(`Please enter a valid phone number. ${PHONE_HINT}`);
+      setPhoneInvalid(true);
+      return;
+    }
+    const weak = passwordError(password);
+    if (weak) {
+      setError(weak);
+      setPasswordInvalid(true);
       return;
     }
     if (password !== confirm) {
@@ -38,11 +57,12 @@ export default function SignUpScreen() {
     setLoading(true);
     try {
       // Creating the account also signs in; the route guard moves to the app.
-      await signUp(email, password);
+      await signUp({ name, phone, email, password });
     } catch (e) {
       setError(
         authErrorMessage(e, "Couldn't create your account. Please try again."),
       );
+      setPhoneInvalid(isPhoneError(e));
       setLoading(false);
     }
   };
@@ -50,34 +70,60 @@ export default function SignUpScreen() {
   const edit = (setter: (v: string) => void) => (text: string) => {
     setter(text);
     if (error) setError(null);
+    setPasswordInvalid(false);
+    setPhoneInvalid(false);
   };
 
   return (
     <ScrollView
       className="flex-1 bg-white"
-      contentContainerClassName="w-full max-w-[440px] self-center gap-8 px-6"
+      contentContainerClassName="w-full max-w-[440px] grow justify-center self-center gap-8 px-6"
       contentContainerStyle={{
-        paddingTop: insets.top + 48,
+        paddingTop: insets.top + 24,
         paddingBottom: insets.bottom + 24,
       }}
       keyboardShouldPersistTaps="handled"
       automaticallyAdjustKeyboardInsets
     >
-      <View className="gap-2">
-        <Text className="text-[28px] font-bold text-zinc-950">
-          Create an account
-        </Text>
-        <Text className="text-base text-zinc-500">
-          Join Asian Le Rewards and start earning points.
-        </Text>
-      </View>
+      <BrandHeader subtitle="Create an account and start earning points." />
 
       <View className="gap-4">
+        {/* Google sign-up asks for name + phone afterwards on complete-profile. */}
+        <GoogleButton
+          disabled={loading}
+          onBusyChange={setGoogleBusy}
+          onError={(message) => {
+            setPasswordInvalid(false);
+            setError(message);
+          }}
+        />
+        <OrDivider />
+        <TextField
+          label="Name"
+          value={name}
+          onChangeText={edit(setName)}
+          autoCapitalize="words"
+          textContentType="name"
+          autoComplete="name"
+          returnKeyType="next"
+          editable={!loading}
+        />
+        <TextField
+          label="Phone number"
+          value={phone}
+          onChangeText={edit(setPhone)}
+          placeholder="604 555 1234"
+          invalid={phoneInvalid}
+          keyboardType="phone-pad"
+          textContentType="telephoneNumber"
+          autoComplete="tel"
+          returnKeyType="next"
+          editable={!loading}
+        />
         <TextField
           label="Email"
           value={email}
           onChangeText={edit(setEmail)}
-          placeholder="you@example.com"
           keyboardType="email-address"
           textContentType="emailAddress"
           autoComplete="email"
@@ -89,10 +135,13 @@ export default function SignUpScreen() {
           password
           value={password}
           onChangeText={edit(setPassword)}
-          placeholder={`At least ${MIN_PASSWORD} characters`}
           textContentType="newPassword"
           autoComplete="new-password"
+          // iOS strong-password suggestions follow the same rules.
+          passwordRules={`minlength: ${MIN_PASSWORD}; required: upper; required: digit; required: special;`}
           returnKeyType="next"
+          hint={PASSWORD_HINT}
+          invalid={passwordInvalid}
           editable={!loading}
         />
         <TextField
@@ -100,7 +149,6 @@ export default function SignUpScreen() {
           password
           value={confirm}
           onChangeText={edit(setConfirm)}
-          placeholder="Type it again"
           textContentType="newPassword"
           autoComplete="new-password"
           returnKeyType="go"
