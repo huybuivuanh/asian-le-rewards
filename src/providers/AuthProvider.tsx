@@ -1,8 +1,8 @@
 import { onAuthStateChanged, type User } from "firebase/auth";
-import { createContext, use, useEffect, useState, type ReactNode } from "react";
+import { createContext, use, useEffect, useRef, useState, type ReactNode } from "react";
 import { auth } from "@/lib/firebaseConfig";
 import { signOutUser, signUp as signUpService, type SignUpInput } from "@/services/authService";
-import { listenToMember } from "@/services/memberService";
+import { deleteAccount as deleteAccountService, listenToMember } from "@/services/memberService";
 
 type AuthContextType = {
   user: User | null;
@@ -12,6 +12,8 @@ type AuthContextType = {
   loading: boolean;
   signUp: (input: SignUpInput) => Promise<void>;
   logout: () => Promise<void>;
+  /** Deletes everything for this member (Cloud Function), then signs out. */
+  deleteAccount: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -26,6 +28,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // saved. Hide the user until sign-up fully finishes so the sign-up screen stays
   // up (and can show an error) if saving the member fails.
   const [signingUp, setSigningUp] = useState(false);
+  // While deleting, the member doc disappears before the login does. Ignore that
+  // so "Finish your profile" doesn't flash before we sign out.
+  const deletingRef = useRef(false);
 
   useEffect(
     () =>
@@ -43,6 +48,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return listenToMember(
       uid,
       (next) => {
+        if (deletingRef.current && !next) return;
         setMember(next);
         setMemberUid(uid);
       },
@@ -62,6 +68,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const deleteAccount = async () => {
+    deletingRef.current = true;
+    try {
+      await deleteAccountService();
+      await signOutUser();
+    } finally {
+      deletingRef.current = false;
+    }
+  };
+
   const visibleUser = signingUp ? null : user;
   const loading = authLoading || (!!visibleUser && memberUid !== visibleUser.uid);
 
@@ -73,6 +89,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loading,
         signUp,
         logout: signOutUser,
+        deleteAccount,
       }}
     >
       {children}

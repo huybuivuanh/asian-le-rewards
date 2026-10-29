@@ -22,6 +22,11 @@ scans the QR to collect and redeem points.
 - [x] "Finish your profile" screen when signed in but the member doc is missing
 - [x] `firestore.rules` written (paste into the console until the repo has `firebase.json`)
 - [x] One phone number per account: `phoneNumbers/{phone}` reserved with the member (rules tested in the emulator)
+- [x] Tabs: Home (points + QR), Activity (points history, live), Profile (name, phone, email,
+      sign out, delete account)
+- [x] `functions/` + `firebase.json` + `.firebaserc` (project `asian-le-rewards`). `deleteAccount`
+      written and tested in the emulators
+- [ ] Turn on **Blaze**, then `firebase deploy --only functions,firestore:rules`
 
 ## Decisions
 
@@ -160,6 +165,7 @@ phoneNumbers/{phone}               uid   (one phone per member + POS phone looku
 3. **Customer app** (this repo): email sign-in ✅ → name + phone at sign-up ✅
    (phone is for POS search, not verified) → Google sign-in (needs a development build)
    → home (points + QR) → history → Delete account.
+   - Delete account: Profile → confirm in place → `deleteAccount` function → sign out.
    - The app listens live to `members/{uid}` (`AuthProvider`). Signed in with no member doc
      (first Google sign-in, or an interrupted email sign-up) → `complete-profile` screen.
 4. **POS integration**
@@ -195,3 +201,6 @@ phoneNumbers/{phone}               uid   (one phone per member + POS phone looku
 - Light theme only (`userInterfaceStyle: "light"`). Header/background colors come from the
   React Navigation theme in the root layout.
 - After config changes, start with a cleared cache: `npx expo start -c`
+- Cloud Functions: `functions/` (TypeScript, firebase-functions v7, Node 22). Build with
+  `npm --prefix functions run build`. Emulators (`firebase emulators:start`) need **Java 21+**
+  with the current Firebase CLI.

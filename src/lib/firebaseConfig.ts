@@ -3,6 +3,7 @@ import ReactNativeAsyncStorage from "@react-native-async-storage/async-storage";
 import { getApp, getApps, initializeApp } from "firebase/app";
 import { Auth, getAuth, getReactNativePersistence, initializeAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
+import { getFunctions } from "firebase/functions";
 import { Platform } from "react-native";
 
 function requiredEnvVar(label: string, value: string | undefined): string {
@@ -53,5 +54,6 @@ if (Platform.OS === "web") {
 }
 
 const db = getFirestore(app);
+const functions = getFunctions(app);
 
-export { auth, db };
+export { auth, db, functions };

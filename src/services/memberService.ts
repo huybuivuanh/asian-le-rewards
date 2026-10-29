@@ -1,6 +1,16 @@
 import type { User } from "firebase/auth";
-import { doc, onSnapshot, Timestamp, writeBatch } from "firebase/firestore";
-import { db } from "@/lib/firebaseConfig";
+import {
+  collection,
+  doc,
+  limit,
+  onSnapshot,
+  orderBy,
+  query,
+  Timestamp,
+  writeBatch,
+} from "firebase/firestore";
+import { httpsCallable } from "firebase/functions";
+import { db, functions } from "@/lib/firebaseConfig";
 import { normalizePhone } from "@/utils/phone";
 
 type MemberDetails = Pick<Member, "name" | "phone">;
@@ -54,4 +64,22 @@ export function listenToMember(
     (snap) => onChange(snap.exists() ? (snap.data() as Member) : null),
     onError,
   );
+}
+
+/** Newest first, live. Returns unsubscribe. */
+export function listenToTransactions(
+  uid: string,
+  onChange: (transactions: Transaction[]) => void,
+  onError: (error: Error) => void,
+): () => void {
+  return onSnapshot(
+    query(collection(db, "members", uid, "transactions"), orderBy("createdAt", "desc"), limit(100)),
+    (snap) => onChange(snap.docs.map((d) => ({ ...(d.data() as Omit<Transaction, "id">), id: d.id }))),
+    onError,
+  );
+}
+
+/** Deletes the member, their history, phone reservation and login (Cloud Function). */
+export async function deleteAccount(): Promise<void> {
+  await httpsCallable(functions, "deleteAccount")();
 }

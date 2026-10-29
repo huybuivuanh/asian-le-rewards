@@ -4,28 +4,17 @@ import {
   REWARD_DOLLARS,
   rewardProgress,
 } from "@/utils/rewards";
-import { useState } from "react";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { ScrollView, Text, View } from "react-native";
 import QRCode from "react-native-qrcode-svg";
 
 export default function HomeScreen() {
-  const { member, logout } = useAuth();
-  const [signingOut, setSigningOut] = useState(false);
+  const { member } = useAuth();
 
   // The route guard only shows this screen when the member doc exists.
   if (!member) return null;
 
   const points = member.points;
   const { rewards, intoNext, toNext } = rewardProgress(points);
-
-  const signOut = async () => {
-    setSigningOut(true);
-    try {
-      await logout();
-    } finally {
-      setSigningOut(false);
-    }
-  };
 
   return (
     <ScrollView
@@ -105,20 +94,6 @@ export default function HomeScreen() {
         {REWARD_DOLLARS} off
       </Text>
 
-      {/* Moves to an Account tab later (with Delete account). */}
-      <Pressable
-        accessibilityRole="button"
-        onPress={signOut}
-        disabled={signingOut}
-        className="self-center"
-        hitSlop={8}
-      >
-        <Text
-          className={`text-[15px] font-semibold text-zinc-500 ${signingOut ? "opacity-40" : ""}`}
-        >
-          Sign out
-        </Text>
-      </Pressable>
     </ScrollView>
   );
 }
