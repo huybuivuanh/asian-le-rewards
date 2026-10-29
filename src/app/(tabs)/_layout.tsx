@@ -1,7 +1,6 @@
 import { NativeTabs } from "expo-router/native-tabs";
 import { Tabs } from "expo-router/tabs";
 import { Platform } from "react-native";
-import { useIsWide } from "@/hooks/useIsWide";
 import { TABS } from "@/navigation/tabs";
 import { WebTabBar } from "@/navigation/WebTabBar";
 
@@ -23,16 +22,15 @@ function AppTabs() {
   );
 }
 
-// Web: NativeTabs floats over the page there, so use a regular tab bar —
-// a header on wide screens, a bottom bar in phone browsers.
+// Web: NativeTabs floats over the page there, so use a website-style header
+// (tabs on wide screens, a hamburger menu in phone browsers).
 function WebTabs() {
-  const wide = useIsWide();
   return (
     <Tabs
       tabBar={(props) => <WebTabBar {...props} />}
       screenOptions={{
         headerShown: false,
-        tabBarPosition: wide ? "top" : "bottom",
+        tabBarPosition: "top",
       }}
     >
       {TABS.map((tab) => (
