@@ -8,7 +8,10 @@
     "scheme": "asianlerewards",
     "userInterfaceStyle": "light",
     "ios": {
-      "bundleIdentifier": "com.buivuanhhuy.AsianLeRewards"
+      "bundleIdentifier": "com.buivuanhhuy.AsianLeRewards",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
