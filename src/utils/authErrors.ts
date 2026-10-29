@@ -1,6 +1,6 @@
 // Turns Firebase auth error codes into messages for customers.
 import { PASSWORD_HINT } from "@/utils/password";
-import { PHONE_HINT } from "@/utils/phone";
+import { PHONE_ERROR } from "@/utils/phone";
 
 const MESSAGES: Record<string, string> = {
   "auth/invalid-credential": "Email or password is incorrect.",
@@ -18,7 +18,7 @@ const MESSAGES: Record<string, string> = {
   "auth/popup-blocked": "Your browser blocked the Google window. Allow pop-ups and try again.",
   "google/expo-go": "Google sign-in doesn't work in Expo Go. Use email, or a development build.",
   "member/phone-taken": "This phone number is already used by another account.",
-  "member/invalid-phone": `Please enter a valid phone number. ${PHONE_HINT}`,
+  "member/invalid-phone": PHONE_ERROR,
   "google/play-services": "Google Play services is missing or out of date on this device.",
 };
 

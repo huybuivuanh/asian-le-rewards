@@ -4,9 +4,10 @@ import { useAuth } from "@/providers/AuthProvider";
 import { createMember } from "@/services/memberService";
 import { BrandHeader } from "@/ui/BrandHeader";
 import { PrimaryButton } from "@/ui/PrimaryButton";
+import { PhoneField } from "@/ui/PhoneField";
 import { TextField } from "@/ui/TextField";
 import { authErrorMessage, isPhoneError } from "@/utils/authErrors";
-import { normalizePhone, PHONE_HINT } from "@/utils/phone";
+import { normalizePhone, PHONE_ERROR } from "@/utils/phone";
 import { useState } from "react";
 import { Keyboard, Pressable, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -27,7 +28,7 @@ export default function CompleteProfileScreen() {
     if (!canSubmit || !user) return;
     Keyboard.dismiss();
     if (!normalizePhone(phone)) {
-      setError(`Please enter a valid phone number. ${PHONE_HINT}`);
+      setError(PHONE_ERROR);
       setPhoneInvalid(true);
       return;
     }
@@ -78,15 +79,10 @@ export default function CompleteProfileScreen() {
           returnKeyType="next"
           editable={!loading}
         />
-        <TextField
-          label="Phone number"
+        <PhoneField
           value={phone}
           onChangeText={edit(setPhone)}
-          placeholder="604 555 1234"
           invalid={phoneInvalid}
-          keyboardType="phone-pad"
-          textContentType="telephoneNumber"
-          autoComplete="tel"
           returnKeyType="go"
           onSubmitEditing={submit}
           editable={!loading}

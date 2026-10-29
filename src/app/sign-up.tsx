@@ -2,10 +2,11 @@ import { useAuth } from "@/providers/AuthProvider";
 import { BrandHeader } from "@/ui/BrandHeader";
 import { GoogleButton, OrDivider } from "@/ui/GoogleButton";
 import { PrimaryButton } from "@/ui/PrimaryButton";
+import { PhoneField } from "@/ui/PhoneField";
 import { TextField } from "@/ui/TextField";
 import { authErrorMessage, isPhoneError } from "@/utils/authErrors";
 import { MIN_PASSWORD, PASSWORD_HINT, passwordError } from "@/utils/password";
-import { normalizePhone, PHONE_HINT } from "@/utils/phone";
+import { normalizePhone, PHONE_ERROR } from "@/utils/phone";
 import { Link } from "expo-router";
 import { useState } from "react";
 import { Keyboard, ScrollView, Text, View } from "react-native";
@@ -39,7 +40,7 @@ export default function SignUpScreen() {
     if (!canSubmit) return;
     Keyboard.dismiss();
     if (!normalizePhone(phone)) {
-      setError(`Please enter a valid phone number. ${PHONE_HINT}`);
+      setError(PHONE_ERROR);
       setPhoneInvalid(true);
       return;
     }
@@ -108,15 +109,10 @@ export default function SignUpScreen() {
           returnKeyType="next"
           editable={!loading}
         />
-        <TextField
-          label="Phone number"
+        <PhoneField
           value={phone}
           onChangeText={edit(setPhone)}
-          placeholder="604 555 1234"
           invalid={phoneInvalid}
-          keyboardType="phone-pad"
-          textContentType="telephoneNumber"
-          autoComplete="tel"
           returnKeyType="next"
           editable={!loading}
         />

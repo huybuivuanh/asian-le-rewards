@@ -1,5 +1,19 @@
 import { useState } from "react";
-import { Pressable, Text, TextInput, View, type TextInputProps } from "react-native";
+import {
+  Platform,
+  Pressable,
+  Text,
+  TextInput,
+  View,
+  type TextInputProps,
+  type TextStyle,
+} from "react-native";
+
+// Hides the browser's focus box on web. Chrome's default outline ignores
+// outline-width, so it has to be outline-style: none ("none" is web-only CSS,
+// not in React Native's types).
+const noFocusOutline =
+  Platform.OS === "web" ? ({ outlineStyle: "none" } as unknown as TextStyle) : undefined;
 
 type Props = TextInputProps & {
   label: string;
@@ -10,7 +24,7 @@ type Props = TextInputProps & {
   hint?: string;
 };
 
-export function TextField({ label, password, invalid, hint, ...input }: Props) {
+export function TextField({ label, password, invalid, hint, style, ...input }: Props) {
   const [hidden, setHidden] = useState(true);
 
   return (
@@ -29,6 +43,7 @@ export function TextField({ label, password, invalid, hint, ...input }: Props) {
           secureTextEntry={password && hidden}
           accessibilityLabel={label}
           className="h-full flex-1 text-[17px] text-zinc-950"
+          style={[noFocusOutline, style]}
           {...input}
         />
         {password && (
