@@ -4,7 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import Animated, { SlideInUp, SlideOutUp } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { listenToNewTransactions } from "@/services/memberService";
+import { listenToNewTransactions } from "../transactionService";
+import type { Transaction } from "../types";
 
 const SHOW_MS = 4000;
 

@@ -5,11 +5,9 @@ import { Image } from "expo-image";
 import type { BottomTabBarProps } from "expo-router/tabs";
 import { Pressable, Text, View } from "react-native";
 import Svg, { Path } from "react-native-svg";
-import { useIsWide } from "@/utils/useIsWide";
-import { TABS } from "@/ui/tabConfig";
-
-const BRAND = "#DA251D";
-const MUTED = "#71717A";
+import { useIsWide } from "@/hooks/useIsWide";
+import { colors } from "@/theme/colors";
+import { TABS } from "./tabs";
 
 function TabIcon({ name, color }: { name: string; color: string }) {
   const d = TABS.find((tab) => tab.name === name)?.svg;
@@ -95,7 +93,7 @@ export function WebTabBar({
           onPress={() => navigateToTab(tab.key)}
           className="h-14 flex-1 items-center justify-center gap-0.5"
         >
-          <TabIcon name={tab.name} color={tab.focused ? BRAND : MUTED} />
+          <TabIcon name={tab.name} color={tab.focused ? colors.brand : colors.muted} />
           <Text
             className={`text-[11px] font-semibold ${tab.focused ? "text-brand" : "text-zinc-500"}`}
           >

@@ -6,11 +6,11 @@ import {
   signInWithEmailAndPassword,
   signOut,
 } from "firebase/auth";
-import { auth } from "@/lib/firebaseConfig";
-import { signOutGoogle } from "@/services/googleSignIn";
-import { createMember } from "@/services/memberService";
+import { auth } from "@/lib/firebase";
+import { createMember } from "@/features/member/memberService";
+import { signOutGoogle } from "./googleSignIn";
 
-export { signInWithGoogle } from "@/services/googleSignIn";
+export { signInWithGoogle } from "./googleSignIn";
 
 export async function signIn(email: string, password: string): Promise<void> {
   await signInWithEmailAndPassword(auth, email.trim(), password);

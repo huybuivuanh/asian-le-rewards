@@ -1,7 +1,8 @@
 // Google sign-in on web: Firebase's popup.
 import * as firebaseAuth from "firebase/auth";
 import type { Auth, AuthProvider, UserCredential } from "firebase/auth";
-import { auth } from "@/lib/firebaseConfig";
+import { errorCode } from "@/lib/errors";
+import { auth } from "@/lib/firebase";
 
 // tsconfig points firebase/auth at its React Native types, which leave out this
 // web-only function. It exists in the web build that Metro loads here.
@@ -22,7 +23,7 @@ export async function signInWithGoogle(): Promise<boolean> {
     await signInWithPopup(auth, provider);
     return true;
   } catch (error) {
-    if (CANCELLED.includes((error as { code?: string }).code ?? "")) return false;
+    if (CANCELLED.includes(errorCode(error) ?? "")) return false;
     throw error;
   }
 }

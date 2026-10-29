@@ -8,6 +8,7 @@ import {
   type TextInputProps,
   type TextStyle,
 } from "react-native";
+import { colors } from "@/theme/colors";
 
 // Hides the browser's focus box on web. Chrome's default outline ignores
 // outline-width, so it has to be outline-style: none ("none" is web-only CSS,
@@ -24,6 +25,7 @@ type Props = TextInputProps & {
   hint?: string;
 };
 
+/** Labelled text input with an optional Show/Hide toggle for passwords. */
 export function TextField({ label, password, invalid, hint, style, ...input }: Props) {
   const [hidden, setHidden] = useState(true);
 
@@ -37,7 +39,7 @@ export function TextField({ label, password, invalid, hint, style, ...input }: P
         style={{ borderCurve: "continuous" }}
       >
         <TextInput
-          placeholderTextColor="#A1A1AA"
+          placeholderTextColor={colors.placeholder}
           autoCapitalize="none"
           autoCorrect={false}
           secureTextEntry={password && hidden}

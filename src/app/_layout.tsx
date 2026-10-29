@@ -6,8 +6,9 @@ import { DefaultTheme, ThemeProvider } from "expo-router/react-navigation";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { View } from "react-native";
-import { AuthProvider, useAuth } from "@/providers/AuthProvider";
-import { PointsBanner } from "@/ui/PointsBanner";
+import { AuthProvider, useAuth } from "@/features/auth/AuthProvider";
+import { PointsBanner } from "@/features/rewards/components/PointsBanner";
+import { colors } from "@/theme/colors";
 
 // Keep the splash up until Firebase restores the saved login, so signed-in
 // customers don't see the sign-in screen flash on launch.
@@ -18,9 +19,9 @@ const theme = {
   ...DefaultTheme,
   colors: {
     ...DefaultTheme.colors,
-    primary: "#DA251D",
-    background: "#FFFFFF",
-    card: "#FFFFFF",
+    primary: colors.brand,
+    background: colors.white,
+    card: colors.white,
   },
 };
 

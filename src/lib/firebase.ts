@@ -1,4 +1,4 @@
-// src/lib/firebaseConfig.ts
+// Firebase app, auth, Firestore and Functions clients, shared by the whole app.
 import ReactNativeAsyncStorage from "@react-native-async-storage/async-storage";
 import { getApp, getApps, initializeApp } from "firebase/app";
 import { Auth, getAuth, getReactNativePersistence, initializeAuth } from "firebase/auth";

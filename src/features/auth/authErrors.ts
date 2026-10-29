@@ -1,6 +1,7 @@
 // Turns Firebase auth error codes into messages for customers.
-import { PASSWORD_HINT } from "@/utils/password";
-import { PHONE_ERROR } from "@/utils/phone";
+import { PHONE_ERROR } from "@/features/member/phone";
+import { errorCode } from "@/lib/errors";
+import { PASSWORD_HINT } from "./password";
 
 const MESSAGES: Record<string, string> = {
   "auth/invalid-credential": "Email or password is incorrect.",
@@ -24,13 +25,14 @@ const MESSAGES: Record<string, string> = {
 
 /** True for errors about the phone number (taken or invalid), to highlight that field. */
 export function isPhoneError(error: unknown): boolean {
-  const code = (error as { code?: unknown } | null)?.code;
+  const code = errorCode(error);
   return code === "member/phone-taken" || code === "member/invalid-phone";
 }
 
+/** A customer-friendly message for an auth or sign-up error, or `fallback` if it's unknown. */
 export function authErrorMessage(error: unknown, fallback: string): string {
-  const code = (error as { code?: unknown } | null)?.code;
-  if (typeof code === "string" && MESSAGES[code]) return MESSAGES[code];
+  const code = errorCode(error);
+  if (code && MESSAGES[code]) return MESSAGES[code];
   if (__DEV__) console.warn("[auth]", error);
   return fallback;
 }

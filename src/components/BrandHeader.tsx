@@ -1,7 +1,7 @@
-import { Text, View } from "react-native";
 import { Image } from "expo-image";
+import { Text, View } from "react-native";
 
-// "Asian [logo] Le Rewards" title with a subtitle, used on the sign-in and sign-up screens.
+// "Asian [logo] Le Rewards" title with a subtitle, used on the sign-in flow screens.
 export function BrandHeader({ subtitle }: { subtitle: string }) {
   return (
     <View className="items-center gap-3">

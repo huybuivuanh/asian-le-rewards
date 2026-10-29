@@ -1,9 +1,9 @@
 import { NativeTabs } from "expo-router/native-tabs";
 import { Tabs } from "expo-router/tabs";
 import { Platform } from "react-native";
-import { useIsWide } from "@/utils/useIsWide";
-import { WebTabBar } from "@/ui/WebTabBar";
-import { TABS } from "@/ui/tabConfig";
+import { useIsWide } from "@/hooks/useIsWide";
+import { TABS } from "@/navigation/tabs";
+import { WebTabBar } from "@/navigation/WebTabBar";
 
 export default function TabsLayout() {
   return Platform.OS === "web" ? <WebTabs /> : <AppTabs />;

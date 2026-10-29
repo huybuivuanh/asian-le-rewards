@@ -1,4 +1,5 @@
-// Redeem rule (same numbers the POS will use): 100 points = $5 off.
+// Reward rules: 100 points = $5 off. Keep in sync with functions/src/shared.ts,
+// which is what actually applies them.
 export const POINTS_PER_REWARD = 100;
 export const REWARD_DOLLARS = 5;
 

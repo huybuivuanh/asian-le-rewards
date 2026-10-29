@@ -3,7 +3,7 @@ import { HttpsError, type CallableRequest } from "firebase-functions/v2/https";
 
 export const db = () => getFirestore();
 
-// Same numbers as the app (src/utils/rewards.ts).
+// Same numbers as the app (src/features/rewards/rewards.ts).
 export const POINTS_PER_DOLLAR = 1;
 export const POINTS_PER_REWARD = 100;
 export const REWARD_DOLLARS = 5;

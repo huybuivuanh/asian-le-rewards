@@ -15,8 +15,8 @@ scans the QR to collect and redeem points.
 - [x] Light theme only
 - [x] Firebase email + password auth (sign in, create account, forgot password) — JS SDK, same as POS
 - [ ] Create the loyalty Firebase project, enable Email/Password + Google sign-in, fill `.env`
-- [x] "Continue with Google" on sign-in and sign-up — code done (`src/services/googleSignIn.ts`
-      native, `googleSignIn.web.ts` web, `src/ui/GoogleButton.tsx`, `app.config.ts` adds the iOS URL scheme)
+- [x] "Continue with Google" on sign-in and sign-up — code done (`src/features/auth/googleSignIn.ts`
+      native, `googleSignIn.web.ts` web, `src/features/auth/components/GoogleButton.tsx`, `app.config.ts` adds the iOS URL scheme)
 - [ ] Google one-time setup (below), fill the `EXPO_PUBLIC_GOOGLE_*` values in `.env`, make a development build
 - [x] Sign-up asks for name + phone and writes `members/{uid}` (rolled back if the save fails)
 - [x] "Finish your profile" screen when signed in but the member doc is missing
@@ -141,7 +141,7 @@ phoneNumbers/{phone}               uid   (one phone per member + POS phone looku
 ```
 
 - Phones are stored as **10 digits, no formatting** (same digits-only style as POS);
-  `src/utils/phone.ts` normalizes ("1-604-555-1234" → `6045551234`). North American numbers only.
+  `src/features/member/phone.ts` normalizes ("1-604-555-1234" → `6045551234`). North American numbers only.
 
 - Transaction ids `earn_<orderId>` / `redeem_<orderId>` make every call safe to retry
   and enforce "once per order".
@@ -209,17 +209,17 @@ All written and tested in the emulators (`functions/src/`). POS functions requir
 ## Notes on this repo
 
 - Expo SDK 58, routes in `src/app`, alias `@/*` → `src/*`
-- Structure follows POS: `src/lib/firebaseConfig.ts`, `src/providers/AuthProvider.tsx`,
-  `src/services/`, `src/ui/`, `src/utils/`.
+- Structure: feature folders (`src/features/auth|member|rewards`), shared UI in
+  `src/components/ui`, see README. (The POS still uses the older `services/ ui/ utils/` layout.)
 - Auth: Firebase JS SDK email + password on all platforms (works in Expo Go), plus Google
   (popup on web, native library on iOS/Android — development build only).
-  `src/lib/firebaseConfig.ts` (AsyncStorage persistence on native) →
-  `src/services/authService.ts` (signIn / signUp / resetPassword / signOutUser) →
-  `src/providers/AuthProvider.tsx` (user, member, loading, signUp, logout). Screens: `sign-in`, `sign-up`, `complete-profile`,
+  `src/lib/firebase.ts` (AsyncStorage persistence on native) →
+  `src/features/auth/authService.ts` (signIn / signUp / resetPassword / signOutUser) →
+  `src/features/auth/AuthProvider.tsx` (user, member, loading, signUp, logout). Screens: `sign-in`, `sign-up`, `complete-profile`,
   guarded with `Stack.Protected`. Config: `EXPO_PUBLIC_FIREBASE_*` in `.env` (see `.env.example`).
 - `tsconfig.json` maps `@firebase/auth` to its React Native types (same as POS) so
   `getReactNativePersistence` type-checks.
-- Styling: NativeWind classes; brand color `brand` (#DA251D, logo red) in `tailwind.config.js`.
+- Styling: NativeWind classes; brand color `brand` (#DA251D, logo red) defined in `src/theme/colors.js` and shared with `tailwind.config.js`.
 - Light theme only (`userInterfaceStyle: "light"`). Header/background colors come from the
   React Navigation theme in the root layout.
 - After config changes, start with a cleared cache: `npx expo start -c`

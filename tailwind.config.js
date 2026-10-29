@@ -1,3 +1,5 @@
+const { colors } = require("./src/theme/colors");
+
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: ["./src/**/*.{js,ts,jsx,tsx}"],
@@ -8,8 +10,7 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // Red from the Asian Le logo
-        brand: "#DA251D",
+        brand: colors.brand,
       },
     },
   },

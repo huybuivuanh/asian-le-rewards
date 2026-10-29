@@ -1,6 +1,6 @@
-import { TextField } from "@/ui/TextField";
-import { formatPhoneInput, PHONE_PLACEHOLDER } from "@/utils/phone";
 import type { ComponentProps } from "react";
+import { TextField } from "@/components/ui/TextField";
+import { formatPhoneInput, PHONE_PLACEHOLDER } from "../phone";
 
 type Props = Omit<ComponentProps<typeof TextField>, "label" | "onChangeText"> & {
   onChangeText: (formatted: string) => void;

@@ -1,10 +1,11 @@
 import { onAuthStateChanged, type User } from "firebase/auth";
 import { createContext, use, useEffect, useRef, useState, type ReactNode } from "react";
-import { auth } from "@/lib/firebaseConfig";
-import { signOutUser, signUp as signUpService, type SignUpInput } from "@/services/authService";
-import { deleteAccount as deleteAccountService, listenToMember } from "@/services/memberService";
+import { deleteAccount as deleteAccountService, listenToMember } from "@/features/member/memberService";
+import type { Member } from "@/features/member/types";
+import { auth } from "@/lib/firebase";
+import { signOutUser, signUp as signUpService, type SignUpInput } from "./authService";
 
-type AuthContextType = {
+type AuthContextValue = {
   user: User | null;
   /** members/{uid}, live. `null` when signed out or the doc is missing. */
   member: Member | null;
@@ -16,14 +17,15 @@ type AuthContextType = {
   deleteAccount: () => Promise<void>;
 };
 
-const AuthContext = createContext<AuthContextType | null>(null);
+/** The member doc and whose it is, so a stale doc from another login is never shown. */
+type LoadedMember = { uid: string; member: Member | null };
+
+const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
-  const [member, setMember] = useState<Member | null>(null);
-  // uid whose member doc has loaded; while it differs from user.uid we're still loading.
-  const [memberUid, setMemberUid] = useState<string | null>(null);
+  const [loaded, setLoaded] = useState<LoadedMember | null>(null);
   // Firebase signs in as soon as the login is created, before the member doc is
   // saved. Hide the user until sign-up fully finishes so the sign-up screen stays
   // up (and can show an error) if saving the member fails.
@@ -36,6 +38,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     () =>
       onAuthStateChanged(auth, (firebaseUser) => {
         setUser(firebaseUser);
+        if (!firebaseUser) setLoaded(null);
         setAuthLoading(false);
       }),
     [],
@@ -43,18 +46,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const uid = user?.uid;
   useEffect(() => {
-    setMember(null);
     if (!uid) return;
     return listenToMember(
       uid,
-      (next) => {
-        if (deletingRef.current && !next) return;
-        setMember(next);
-        setMemberUid(uid);
+      (member) => {
+        if (deletingRef.current && !member) return;
+        setLoaded({ uid, member });
       },
       (error) => {
         if (__DEV__) console.warn("[member]", error);
-        setMemberUid(uid);
+        setLoaded({ uid, member: null });
       },
     );
   }, [uid]);
@@ -79,14 +80,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const visibleUser = signingUp ? null : user;
-  const loading = authLoading || (!!visibleUser && memberUid !== visibleUser.uid);
+  const memberLoaded = !!visibleUser && loaded?.uid === visibleUser.uid;
 
   return (
     <AuthContext
       value={{
         user: visibleUser,
-        member: visibleUser ? member : null,
-        loading,
+        member: memberLoaded ? loaded.member : null,
+        loading: authLoading || (!!visibleUser && !memberLoaded),
         signUp,
         logout: signOutUser,
         deleteAccount,
@@ -97,7 +98,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 }
 
-export function useAuth() {
+export function useAuth(): AuthContextValue {
   const value = use(AuthContext);
   if (!value) throw new Error("useAuth must be used inside AuthProvider");
   return value;

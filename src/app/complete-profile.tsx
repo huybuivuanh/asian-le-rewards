@@ -1,19 +1,19 @@
 // Shown when someone is signed in but has no member doc (sign-up was interrupted
 // between creating the login and saving the member).
-import { useAuth } from "@/providers/AuthProvider";
-import { createMember } from "@/services/memberService";
-import { BrandHeader } from "@/ui/BrandHeader";
-import { PrimaryButton } from "@/ui/PrimaryButton";
-import { PhoneField } from "@/ui/PhoneField";
-import { TextField } from "@/ui/TextField";
-import { authErrorMessage, isPhoneError } from "@/utils/authErrors";
-import { normalizePhone, PHONE_ERROR } from "@/utils/phone";
 import { useState } from "react";
-import { Keyboard, Pressable, ScrollView, Text, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Keyboard, Text, View } from "react-native";
+import { Button } from "@/components/ui/Button";
+import { FormError } from "@/components/ui/FormError";
+import { TextButton } from "@/components/ui/TextButton";
+import { TextField } from "@/components/ui/TextField";
+import { authErrorMessage, isPhoneError } from "@/features/auth/authErrors";
+import { useAuth } from "@/features/auth/AuthProvider";
+import { AuthScreen } from "@/features/auth/components/AuthScreen";
+import { PhoneField } from "@/features/member/components/PhoneField";
+import { createMember } from "@/features/member/memberService";
+import { normalizePhone, PHONE_ERROR } from "@/features/member/phone";
 
 export default function CompleteProfileScreen() {
-  const insets = useSafeAreaInsets();
   const { user, logout } = useAuth();
   // Google sign-ins come with a name; the customer can still change it.
   const [name, setName] = useState(user?.displayName ?? "");
@@ -51,18 +51,7 @@ export default function CompleteProfileScreen() {
   };
 
   return (
-    <ScrollView
-      className="flex-1 bg-white"
-      contentContainerClassName="w-full max-w-[440px] grow justify-center self-center gap-8 px-6"
-      contentContainerStyle={{
-        paddingTop: insets.top + 24,
-        paddingBottom: insets.bottom + 24,
-      }}
-      keyboardShouldPersistTaps="handled"
-      automaticallyAdjustKeyboardInsets
-    >
-      <BrandHeader subtitle="Almost done. Add your details to finish creating your account." />
-
+    <AuthScreen subtitle="Almost done. Add your details to finish creating your account.">
       <View className="gap-4">
         {user?.email && (
           <Text selectable className="text-[15px] text-zinc-500">
@@ -88,24 +77,18 @@ export default function CompleteProfileScreen() {
           editable={!loading}
         />
 
-        {error && (
-          <Text selectable className="text-sm text-red-600" accessibilityRole="alert">
-            {error}
-          </Text>
-        )}
+        <FormError message={error} />
       </View>
 
-      <PrimaryButton title="Finish" onPress={submit} disabled={!canSubmit} loading={loading} />
+      <Button title="Finish" onPress={submit} disabled={!canSubmit} loading={loading} />
 
-      <Pressable
-        accessibilityRole="button"
+      <TextButton
+        title="Sign out"
+        tone="muted"
         onPress={logout}
         disabled={loading}
         className="self-center"
-        hitSlop={8}
-      >
-        <Text className="text-[15px] font-semibold text-zinc-500">Sign out</Text>
-      </Pressable>
-    </ScrollView>
+      />
+    </AuthScreen>
   );
 }

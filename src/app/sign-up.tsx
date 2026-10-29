@@ -1,19 +1,19 @@
-import { useAuth } from "@/providers/AuthProvider";
-import { BrandHeader } from "@/ui/BrandHeader";
-import { GoogleButton, OrDivider } from "@/ui/GoogleButton";
-import { PrimaryButton } from "@/ui/PrimaryButton";
-import { PhoneField } from "@/ui/PhoneField";
-import { TextField } from "@/ui/TextField";
-import { authErrorMessage, isPhoneError } from "@/utils/authErrors";
-import { MIN_PASSWORD, PASSWORD_HINT, passwordError } from "@/utils/password";
-import { normalizePhone, PHONE_ERROR } from "@/utils/phone";
-import { Link } from "expo-router";
 import { useState } from "react";
-import { Keyboard, ScrollView, Text, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Keyboard, View } from "react-native";
+import { Button } from "@/components/ui/Button";
+import { FormError } from "@/components/ui/FormError";
+import { TextField } from "@/components/ui/TextField";
+import { authErrorMessage, isPhoneError } from "@/features/auth/authErrors";
+import { useAuth } from "@/features/auth/AuthProvider";
+import { AuthScreen } from "@/features/auth/components/AuthScreen";
+import { AuthSwitchLink } from "@/features/auth/components/AuthSwitchLink";
+import { GoogleButton } from "@/features/auth/components/GoogleButton";
+import { OrDivider } from "@/features/auth/components/OrDivider";
+import { MIN_PASSWORD, PASSWORD_HINT, passwordError } from "@/features/auth/password";
+import { PhoneField } from "@/features/member/components/PhoneField";
+import { normalizePhone, PHONE_ERROR } from "@/features/member/phone";
 
 export default function SignUpScreen() {
-  const insets = useSafeAreaInsets();
   const { signUp } = useAuth();
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -60,9 +60,7 @@ export default function SignUpScreen() {
       // Creating the account also signs in; the route guard moves to the app.
       await signUp({ name, phone, email, password });
     } catch (e) {
-      setError(
-        authErrorMessage(e, "Couldn't create your account. Please try again."),
-      );
+      setError(authErrorMessage(e, "Couldn't create your account. Please try again."));
       setPhoneInvalid(isPhoneError(e));
       setLoading(false);
     }
@@ -76,18 +74,7 @@ export default function SignUpScreen() {
   };
 
   return (
-    <ScrollView
-      className="flex-1 bg-white"
-      contentContainerClassName="w-full max-w-[440px] grow justify-center self-center gap-8 px-6"
-      contentContainerStyle={{
-        paddingTop: insets.top + 24,
-        paddingBottom: insets.bottom + 24,
-      }}
-      keyboardShouldPersistTaps="handled"
-      automaticallyAdjustKeyboardInsets
-    >
-      <BrandHeader subtitle="Create an account and start earning points." />
-
+    <AuthScreen subtitle="Create an account and start earning points.">
       <View className="gap-4">
         {/* Google sign-up asks for name + phone afterwards on complete-profile. */}
         <GoogleButton
@@ -152,30 +139,12 @@ export default function SignUpScreen() {
           editable={!loading}
         />
 
-        {error && (
-          <Text
-            selectable
-            className="text-sm text-red-600"
-            accessibilityRole="alert"
-          >
-            {error}
-          </Text>
-        )}
+        <FormError message={error} />
       </View>
 
-      <PrimaryButton
-        title="Create account"
-        onPress={submit}
-        disabled={!canSubmit}
-        loading={loading}
-      />
+      <Button title="Create account" onPress={submit} disabled={!canSubmit} loading={loading} />
 
-      <View className="flex-row justify-center gap-1.5">
-        <Text className="text-[15px] text-zinc-500">Already a member?</Text>
-        <Link href="/sign-in" replace>
-          <Text className="text-[15px] font-semibold text-brand">Sign in</Text>
-        </Link>
-      </View>
-    </ScrollView>
+      <AuthSwitchLink prompt="Already a member?" linkText="Sign in" href="/sign-in" />
+    </AuthScreen>
   );
 }
