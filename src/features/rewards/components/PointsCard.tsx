@@ -9,7 +9,7 @@ type Props = {
 
 /** Red card with the balance and progress to the next reward. */
 export function PointsCard({ points, stretch }: Props) {
-  const { rewards, intoNext, toNext } = rewardProgress(points);
+  const { dollarsOff, intoNext, toNext } = rewardProgress(points);
 
   return (
     <View
@@ -18,13 +18,29 @@ export function PointsCard({ points, stretch }: Props) {
     >
       <View className="gap-1">
         <Text className="text-[15px] font-semibold text-white/80">Your points</Text>
-        <Text
-          className="text-[44px] font-bold text-white"
-          style={{ fontVariant: ["tabular-nums"] }}
-          accessibilityLabel={`${points} points`}
+        <View
+          className="flex-row flex-wrap items-baseline gap-x-3"
+          accessible
+          accessibilityLabel={
+            dollarsOff > 0 ? `${points} points, worth $${dollarsOff} off` : `${points} points`
+          }
         >
-          {points.toLocaleString()}
-        </Text>
+          <Text
+            className="text-[44px] font-bold text-white"
+            style={{ fontVariant: ["tabular-nums"] }}
+          >
+            {points.toLocaleString()}
+          </Text>
+          {/* What the balance is worth right now, e.g. 300 = $15 */}
+          {dollarsOff > 0 && (
+            <Text
+              className="text-[24px] font-semibold text-white/90"
+              style={{ fontVariant: ["tabular-nums"] }}
+            >
+              = ${dollarsOff.toLocaleString()} off
+            </Text>
+          )}
+        </View>
       </View>
 
       <View className="gap-2">
@@ -39,8 +55,8 @@ export function PointsCard({ points, stretch }: Props) {
           />
         </View>
         <Text className="text-[15px] text-white">
-          {rewards > 0
-            ? `You have ${rewards} × $${REWARD_DOLLARS} off ready. ${toNext} more points to the next one.`
+          {dollarsOff > 0
+            ? `${toNext} more points to the next $${REWARD_DOLLARS} off.`
             : `${toNext} more points to $${REWARD_DOLLARS} off.`}
         </Text>
       </View>

@@ -4,21 +4,38 @@
     "slug": "asian-le-rewards",
     "version": "1.0.0",
     "orientation": "portrait",
+    "icon": "./assets/images/app-icon.png",
     "scheme": "asianlerewards",
     "userInterfaceStyle": "light",
     "ios": {
       "bundleIdentifier": "com.buivuanhhuy.AsianLeRewards"
     },
     "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/android-icon-foreground.png",
+        "backgroundColor": "#1C1611"
+      },
       "package": "com.buivuanhhuy.AsianLeRewards",
       "predictiveBackGestureEnabled": false
     },
     "web": {
-      "output": "single"
+      "output": "single",
+      "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
       "expo-router",
-      "expo-splash-screen",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#1C1611",
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 280,
+          "android": {
+            "image": "./assets/images/splash-icon-android.png",
+            "imageWidth": 288
+          }
+        }
+      ],
       "expo-image"
     ],
     "experiments": {

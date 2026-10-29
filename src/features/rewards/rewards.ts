@@ -3,9 +3,13 @@
 export const POINTS_PER_REWARD = 100;
 export const REWARD_DOLLARS = 5;
 
-/** How many $5 rewards a balance covers, and points still needed for the next one. */
+/** Dollars off the balance is worth now, and points still needed for the next $5. */
 export function rewardProgress(points: number) {
   const rewards = Math.floor(points / POINTS_PER_REWARD);
   const intoNext = points % POINTS_PER_REWARD;
-  return { rewards, intoNext, toNext: POINTS_PER_REWARD - intoNext };
+  return {
+    dollarsOff: rewards * REWARD_DOLLARS,
+    intoNext,
+    toNext: POINTS_PER_REWARD - intoNext,
+  };
 }
