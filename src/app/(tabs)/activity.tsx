@@ -82,7 +82,7 @@ export default function ActivityScreen() {
   return (
     <FlatList
       className="flex-1 bg-white"
-      contentContainerClassName="w-full max-w-[440px] grow self-center px-6 pb-10 pt-6"
+      contentContainerClassName="w-full max-w-[640px] grow self-center px-6 pb-10 pt-6"
       contentInsetAdjustmentBehavior="automatic"
       data={transactions ?? []}
       keyExtractor={(t) => t.id}

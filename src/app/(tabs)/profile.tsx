@@ -51,7 +51,7 @@ export default function ProfileScreen() {
   return (
     <ScrollView
       className="flex-1 bg-white"
-      contentContainerClassName="w-full max-w-[440px] self-center gap-6 px-6 pb-10 pt-6"
+      contentContainerClassName="w-full max-w-[640px] self-center gap-6 px-6 pb-10 pt-6"
       contentInsetAdjustmentBehavior="automatic"
     >
       <Text className="text-[28px] font-bold text-zinc-950">Profile</Text>
