@@ -3,6 +3,7 @@ import { Tabs } from "expo-router/tabs";
 import { Platform } from "react-native";
 import { useIsWide } from "@/utils/useIsWide";
 import { WebTabBar } from "@/ui/WebTabBar";
+import { TABS } from "@/ui/tabConfig";
 
 export default function TabsLayout() {
   return Platform.OS === "web" ? <WebTabs /> : <AppTabs />;
@@ -12,18 +13,12 @@ export default function TabsLayout() {
 function AppTabs() {
   return (
     <NativeTabs>
-      <NativeTabs.Trigger name="index">
-        <NativeTabs.Trigger.Label>Home</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon sf="house.fill" md="home" />
-      </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="activity">
-        <NativeTabs.Trigger.Label>Activity</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon sf="clock.arrow.circlepath" md="history" />
-      </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="profile">
-        <NativeTabs.Trigger.Label>Profile</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon sf="person.crop.circle.fill" md="person" />
-      </NativeTabs.Trigger>
+      {TABS.map((tab) => (
+        <NativeTabs.Trigger key={tab.name} name={tab.name}>
+          <NativeTabs.Trigger.Label>{tab.label}</NativeTabs.Trigger.Label>
+          <NativeTabs.Trigger.Icon sf={tab.sf} md={tab.md} />
+        </NativeTabs.Trigger>
+      ))}
     </NativeTabs>
   );
 }
@@ -40,9 +35,9 @@ function WebTabs() {
         tabBarPosition: wide ? "top" : "bottom",
       }}
     >
-      <Tabs.Screen name="index" options={{ title: "Home" }} />
-      <Tabs.Screen name="activity" options={{ title: "Activity" }} />
-      <Tabs.Screen name="profile" options={{ title: "Profile" }} />
+      {TABS.map((tab) => (
+        <Tabs.Screen key={tab.name} name={tab.name} options={{ title: tab.label }} />
+      ))}
     </Tabs>
   );
 }
