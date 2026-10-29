@@ -86,7 +86,7 @@ export default function ActivityScreen() {
       contentInsetAdjustmentBehavior="automatic"
       data={transactions ?? []}
       keyExtractor={(t) => t.id}
-      renderItem={Row}
+      renderItem={({ item }) => <Row item={item} />}
       ItemSeparatorComponent={() => <View className="h-px bg-zinc-100" />}
       ListHeaderComponent={
         <Text className="pb-2 text-[28px] font-bold text-zinc-950">Activity</Text>

@@ -5,7 +5,9 @@ import { Stack } from "expo-router";
 import { DefaultTheme, ThemeProvider } from "expo-router/react-navigation";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
+import { View } from "react-native";
 import { AuthProvider, useAuth } from "@/providers/AuthProvider";
+import { PointsBanner } from "@/ui/PointsBanner";
 
 // Keep the splash up until Firebase restores the saved login, so signed-in
 // customers don't see the sign-in screen flash on launch.
@@ -14,7 +16,12 @@ SplashScreen.preventAutoHideAsync();
 // Light only. Header + screen background match bg-white and the brand red.
 const theme = {
   ...DefaultTheme,
-  colors: { ...DefaultTheme.colors, primary: "#DA251D", background: "#FFFFFF", card: "#FFFFFF" },
+  colors: {
+    ...DefaultTheme.colors,
+    primary: "#DA251D",
+    background: "#FFFFFF",
+    card: "#FFFFFF",
+  },
 };
 
 export default function RootLayout() {
@@ -38,22 +45,41 @@ function RootNavigator() {
   if (loading) return null;
 
   return (
-    <Stack screenOptions={{ headerBackButtonDisplayMode: "minimal", headerShadowVisible: false }}>
-      {/* Signed out: only the sign-in flow is reachable */}
-      <Stack.Protected guard={!user}>
-        <Stack.Screen name="sign-in" options={{ headerShown: false, animation: "fade" }} />
-        <Stack.Screen name="sign-up" options={{ headerShown: false, animation: "fade" }} />
-      </Stack.Protected>
+    <View style={{ flex: 1 }}>
+      <Stack
+        screenOptions={{
+          headerBackButtonDisplayMode: "minimal",
+          headerShadowVisible: false,
+        }}
+      >
+        {/* Signed out: only the sign-in flow is reachable */}
+        <Stack.Protected guard={!user}>
+          <Stack.Screen
+            name="sign-in"
+            options={{ headerShown: false, animation: "fade" }}
+          />
+          <Stack.Screen
+            name="sign-up"
+            options={{ headerShown: false, animation: "fade" }}
+          />
+        </Stack.Protected>
 
-      {/* Signed in but no member doc (interrupted sign-up): finish the profile */}
-      <Stack.Protected guard={!!user && !member}>
-        <Stack.Screen name="complete-profile" options={{ headerShown: false, animation: "fade" }} />
-      </Stack.Protected>
+        {/* Signed in but no member doc (interrupted sign-up): finish the profile */}
+        <Stack.Protected guard={!!user && !member}>
+          <Stack.Screen
+            name="complete-profile"
+            options={{ headerShown: false, animation: "fade" }}
+          />
+        </Stack.Protected>
 
-      {/* Signed in with a member doc: the main app */}
-      <Stack.Protected guard={!!user && !!member}>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      </Stack.Protected>
-    </Stack>
+        {/* Signed in with a member doc: the main app */}
+        <Stack.Protected guard={!!user && !!member}>
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        </Stack.Protected>
+      </Stack>
+
+      {/* "+42 points earned" on top of every screen while signed in */}
+      {user && member && <PointsBanner uid={user.uid} />}
+    </View>
   );
 }
