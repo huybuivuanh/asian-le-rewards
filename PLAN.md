@@ -26,7 +26,11 @@ scans the QR to collect and redeem points.
       sign out, delete account)
 - [x] `functions/` + `firebase.json` + `.firebaserc` (project `asian-le-rewards`). `deleteAccount`
       written and tested in the emulators
-- [ ] Turn on **Blaze**, then `firebase deploy --only functions,firestore:rules`
+- [x] Blaze on; `deleteAccount` deployed and working
+- [x] POS functions written + tested in emulators: `lookupMember`, `earnPoints`, `redeemPoints`,
+      `reverseOrder` (27 checks), plus `functions/scripts/set-pos-role.mjs`
+- [x] All 5 functions deployed
+- [x] POS login `pos@asianle.ca` created and given `role: pos` (2026-10-29)
 
 ## Decisions
 
@@ -72,14 +76,14 @@ export const loyaltyFunctions = getFunctions(loyaltyApp);
 ```
 
 - Each connection has its own login. Staff keep using the normal POS login.
-- Each POS device signs into loyalty **once** as `pos@asianle.com` from a
+- Each POS device signs into loyalty **once** as `pos@asianle.ca` from a
   **Loyalty section in the Profile tab**. The login is remembered.
 - The password is **never** put in `.env` — the web POS is public and `EXPO_PUBLIC_*`
   values are visible in the bundle. The loyalty Firebase *config* is fine in `.env`.
 
 ### Security
 
-- `pos@asianle.com` gets a custom claim `role: "pos"` via a one-time admin script.
+- `pos@asianle.ca` gets a custom claim `role: "pos"` via a one-time admin script.
   Only server code can set claims, so customers can't give it to themselves.
 - Every POS-only function checks `request.auth.token.role === "pos"`.
 - Rules are in `firestore.rules`. Anything not listed there is denied.
@@ -145,13 +149,31 @@ phoneNumbers/{phone}               uid   (one phone per member + POS phone looku
 
 ## Cloud Functions (loyalty project)
 
-| Function | Caller | Does |
+All written and tested in the emulators (`functions/src/`). POS functions require the
+`role: "pos"` claim; a customer calling them gets `permission-denied`.
+
+| Function | Caller | Input → result |
 |---|---|---|
-| `deleteAccount()` | customer | Re-checks the caller, deletes `members/{uid}` + its `transactions`, `phoneNumbers/{phone}`, then the login. Runs on the server so it finishes even if the app closes, and the rules stay delete-free |
-| `lookupMember(uid or phone)` | POS | Name, balance (QR → `members/{uid}`; phone → `phoneNumbers/{phone}` → member) |
-| `earnPoints(uid, orderId, subtotal)` | POS | 1 pt/$1, once per order |
-| `redeemPoints(uid, orderId, steps)` | POS | −100 pts per $5 step, returns $ amount |
-| `reverseOrder(orderId)` | POS | Refund redeemed points, remove earned points |
+| `deleteAccount` | customer | `{}` → `{ deleted }`. Deletes `members/{uid}` + `transactions`, frees `phoneNumbers/{phone}`, deletes the login. Safe to retry |
+| `lookupMember` | POS | `{ uid }` (QR) or `{ phone }` (any format) → `{ member: { uid, name, phone, points } }`; `not-found` if none |
+| `earnPoints` | POS | `{ uid, orderId, subtotal }` → `{ pointsEarned, balance, alreadyEarned }`. floor(subtotal) points, once per order; under $1 earns 0 and writes nothing |
+| `redeemPoints` | POS | `{ uid, orderId, steps }` (1–20) → `{ pointsRedeemed, discount, balance, alreadyRedeemed }`. 100 pts = $5 per step, once per order; `failed-precondition` if not enough points |
+| `reverseOrder` | POS | `{ uid, orderId }` → `{ pointsChanged, balance, alreadyReversed }`. Removes earned, refunds redeemed, once. A cancelled order can't earn again |
+
+- Calling any of them twice for the same order changes nothing (`already…: true`), so the
+  POS can safely retry after a network error. Two taps at the same time also count once.
+- The POS saves `order.loyalty = { memberId, ... }` so `reverseOrder` knows the member.
+- Balance **stops at 0**: if a cancelled order's earned points were already spent,
+  `reverseOrder` only removes what's left, and the reverse record shows the amount applied.
+- Transactions also store `subtotal` (earn) and `discount` (redeem), shown in the Activity tab.
+
+### POS login setup (once)
+
+1. Firebase console → Authentication → **Add user** `pos@asianle.ca` + strong password.
+2. Project settings → Service accounts → **Generate new private key**. Save it **outside the
+   repo** (admin key; `.gitignore` also blocks common key file names).
+3. `node functions/scripts/set-pos-role.mjs pos@asianle.ca C:\keys\asian-le-rewards-key.json`
+4. Sign the POS in to loyalty (signing in again picks up the claim).
 
 ## Phases
 
@@ -160,7 +182,7 @@ phoneNumbers/{phone}               uid   (one phone per member + POS phone looku
    - Review Firestore rules (no rules file in the POS repo yet) and track them in the repo
 1. **Loyalty Firebase project**: create it, Blaze plan (needed for functions),
    Email/Password + Google auth (Google setup above), Firestore,
-   `pos@asianle.com` + `role: pos` script, security rules
+   `pos@asianle.ca` + `role: pos` script, security rules
 2. **Cloud Functions** (table above), tested with emulators
 3. **Customer app** (this repo): email sign-in ✅ → name + phone at sign-up ✅
    (phone is for POS search, not verified) → Google sign-in (needs a development build)

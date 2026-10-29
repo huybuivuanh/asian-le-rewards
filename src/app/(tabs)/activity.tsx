@@ -3,16 +3,19 @@ import { useEffect, useState } from "react";
 import { ActivityIndicator, FlatList, Text, View } from "react-native";
 import { useAuth } from "@/providers/AuthProvider";
 import { listenToTransactions } from "@/services/memberService";
-import { POINTS_PER_REWARD, REWARD_DOLLARS } from "@/utils/rewards";
 
 function describe(t: Transaction): { title: string; detail?: string } {
   switch (t.type) {
     case "earn":
-      return { title: "Points earned" };
-    case "redeem": {
-      const dollars = (Math.abs(t.points) / POINTS_PER_REWARD) * REWARD_DOLLARS;
-      return { title: "Reward used", detail: `$${dollars} off` };
-    }
+      return {
+        title: "Points earned",
+        detail: t.subtotal != null ? `$${t.subtotal.toFixed(2)} order` : undefined,
+      };
+    case "redeem":
+      return {
+        title: "Reward used",
+        detail: t.discount != null ? `$${t.discount} off` : undefined,
+      };
     case "reverse":
       return {
         title: "Order cancelled",

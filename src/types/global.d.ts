@@ -28,5 +28,9 @@ declare global {
     points: number;
     orderId: string;
     createdAt: Timestamp;
+    /** earn only: pre-tax subtotal in dollars the points came from. */
+    subtotal?: number;
+    /** redeem only: dollars off the order. */
+    discount?: number;
   }
 }
