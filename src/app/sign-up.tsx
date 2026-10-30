@@ -12,6 +12,7 @@ import { OrDivider } from "@/features/auth/components/OrDivider";
 import { MIN_PASSWORD, PASSWORD_HINT, passwordError } from "@/features/auth/password";
 import { PhoneField } from "@/features/member/components/PhoneField";
 import { normalizePhone, PHONE_ERROR } from "@/features/member/phone";
+import { WELCOME_BONUS_MIN_SUBTOTAL, WELCOME_BONUS_POINTS } from "@/features/rewards/rewards";
 
 export default function SignUpScreen() {
   const { signUp } = useAuth();
@@ -74,7 +75,9 @@ export default function SignUpScreen() {
   };
 
   return (
-    <AuthScreen subtitle="Create an account and start earning points.">
+    <AuthScreen
+      subtitle={`Sign up and get ${WELCOME_BONUS_POINTS} bonus points with your first $${WELCOME_BONUS_MIN_SUBTOTAL}+ order.`}
+    >
       <View className="gap-4">
         {/* Google sign-up asks for name + phone afterwards on complete-profile. */}
         <GoogleButton

@@ -9,6 +9,9 @@ export const POINTS_PER_REWARD = 100;
 export const REWARD_DOLLARS = 5;
 /** Most $5 steps one order can redeem. */
 export const MAX_REWARD_STEPS = 20;
+/** Welcome bonus: extra points on a member's first order, if its pre-tax subtotal is at least this. */
+export const WELCOME_BONUS_POINTS = 200;
+export const WELCOME_BONUS_MIN_SUBTOTAL = 15;
 
 /** POS-only functions: the caller must be the POS login with the `role: "pos"` claim. */
 export function requirePos(request: CallableRequest): void {

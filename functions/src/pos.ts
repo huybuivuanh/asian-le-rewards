@@ -14,6 +14,8 @@ import {
   requirePos,
   REWARD_DOLLARS,
   transactionRef,
+  WELCOME_BONUS_MIN_SUBTOTAL,
+  WELCOME_BONUS_POINTS,
 } from "./shared.js";
 
 type MemberSummary = { uid: string; name: string; phone: string; points: number };
@@ -46,6 +48,11 @@ export const lookupMember = onCall(async (request): Promise<{ member: MemberSumm
 /**
  * 1 point per $1 of the pre-tax subtotal (whole points, rounded down), once per order.
  * Input: { uid, orderId, subtotal }. Calling again for the same order changes nothing.
+ *
+ * Welcome bonus: the member's first collected order also earns WELCOME_BONUS_POINTS if
+ * its subtotal is at least WELCOME_BONUS_MIN_SUBTOTAL. It's a second "earn" record,
+ * `welcome_<orderId>`. `members/{uid}.firstOrderId` marks which order was first; if that
+ * order is cancelled, reverseOrder clears it so the next order counts as the first.
  */
 export const earnPoints = onCall(async (request) => {
   requirePos(request);
@@ -67,18 +74,47 @@ export const earnPoints = onCall(async (request) => {
   return db().runTransaction(async (tx) => {
     const mRef = memberRef(uid);
     const tRef = transactionRef(uid, `earn_${orderId}`);
-    const [member, existing] = await Promise.all([tx.get(mRef), tx.get(tRef)]);
+    const bRef = transactionRef(uid, `welcome_${orderId}`);
+    const [member, existing, existingBonus] = await Promise.all([
+      tx.get(mRef),
+      tx.get(tRef),
+      tx.get(bRef),
+    ]);
     if (!member.exists) throw new HttpsError("not-found", "Member not found.");
     const balance = (member.get("points") as number) ?? 0;
 
     if (existing.exists) {
-      return { pointsEarned: existing.get("points") as number, balance, alreadyEarned: true };
+      return {
+        pointsEarned: existing.get("points") as number,
+        bonusPoints: existingBonus.exists ? (existingBonus.get("points") as number) : 0,
+        balance,
+        alreadyEarned: true,
+      };
     }
-    if (points === 0) return { pointsEarned: 0, balance, alreadyEarned: false };
+    // Under $1 earns nothing and doesn't count as the first order.
+    if (points === 0) return { pointsEarned: 0, bonusPoints: 0, balance, alreadyEarned: false };
 
-    tx.create(tRef, { type: "earn", points, orderId, subtotal, createdAt: Timestamp.now() });
-    tx.update(mRef, { points: FieldValue.increment(points) });
-    return { pointsEarned: points, balance: balance + points, alreadyEarned: false };
+    const isFirstOrder = member.get("firstOrderId") == null;
+    const bonusPoints =
+      isFirstOrder && subtotal + 1e-9 >= WELCOME_BONUS_MIN_SUBTOTAL ? WELCOME_BONUS_POINTS : 0;
+
+    const now = Timestamp.now();
+    tx.create(tRef, { type: "earn", points, orderId, subtotal, createdAt: now });
+    if (bonusPoints > 0) {
+      // 1 ms later so it sorts next to (just above) the order's own points.
+      const later = Timestamp.fromMillis(now.toMillis() + 1);
+      tx.create(bRef, { type: "earn", points: bonusPoints, orderId, createdAt: later });
+    }
+    tx.update(mRef, {
+      points: FieldValue.increment(points + bonusPoints),
+      ...(isFirstOrder ? { firstOrderId: orderId } : {}),
+    });
+    return {
+      pointsEarned: points,
+      bonusPoints,
+      balance: balance + points + bonusPoints,
+      alreadyEarned: false,
+    };
   });
 });
 
@@ -154,9 +190,10 @@ export const reverseOrder = onCall(async (request) => {
   return db().runTransaction(async (tx) => {
     const mRef = memberRef(uid);
     const rRef = transactionRef(uid, `reverse_${orderId}`);
-    const [member, earned, redeemed, existing] = await Promise.all([
+    const [member, earned, bonus, redeemed, existing] = await Promise.all([
       tx.get(mRef),
       tx.get(transactionRef(uid, `earn_${orderId}`)),
+      tx.get(transactionRef(uid, `welcome_${orderId}`)),
       tx.get(transactionRef(uid, `redeem_${orderId}`)),
       tx.get(rRef),
     ]);
@@ -170,15 +207,21 @@ export const reverseOrder = onCall(async (request) => {
       return { pointsChanged: 0, balance, alreadyReversed: false };
     }
 
-    // Undo both: earn was +N (now -N), redeem was -N (now +N).
+    // Undo all: earn and welcome bonus were +N (now -N), redeem was -N (now +N).
     const fullChange =
       -((earned.get("points") as number | undefined) ?? 0) -
+      ((bonus.get("points") as number | undefined) ?? 0) -
       ((redeemed.get("points") as number | undefined) ?? 0);
     // Stop at 0 instead of going negative.
     const change = Math.max(fullChange, -balance);
+    // The cancelled order no longer counts as the first: the next one can get the bonus.
+    const wasFirstOrder = member.get("firstOrderId") === orderId;
 
     tx.create(rRef, { type: "reverse", points: change, orderId, createdAt: Timestamp.now() });
-    tx.update(mRef, { points: FieldValue.increment(change) });
+    tx.update(mRef, {
+      points: FieldValue.increment(change),
+      ...(wasFirstOrder ? { firstOrderId: FieldValue.delete() } : {}),
+    });
     return { pointsChanged: change, balance: balance + change, alreadyReversed: false };
   });
 });

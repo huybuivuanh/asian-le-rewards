@@ -1,7 +1,7 @@
 // Password rules for new accounts. Keep in sync with the Firebase password policy
 // (Console → Authentication → Settings → Password policy) so the server enforces them too.
 
-export const MIN_PASSWORD = 12;
+export const MIN_PASSWORD = 8;
 
 export const PASSWORD_HINT = `At least ${MIN_PASSWORD} characters, with 1 uppercase letter, 1 number and 1 special character (Ex: ! @ # $).`;
 
