@@ -14,6 +14,11 @@ service cloud.firestore {
       return signedIn() && request.auth.uid == uid;
     }
 
+    // The shared POS account (`role: "pos"` custom claim — same check as the POS functions).
+    function isPos() {
+      return signedIn() && request.auth.token.role == "pos";
+    }
+
     function validName(data) {
       return data.name is string && data.name.size() > 0 && data.name.size() <= 100;
     }
@@ -25,6 +30,9 @@ service cloud.firestore {
 
     match /members/{uid} {
       allow read: if isOwner(uid);
+      // The POS listens to the member it has open, for a live balance. One doc by id
+      // only (`get`, not `list`), so it can't download the member list.
+      allow get: if isPos();
 
       // Created by the app on sign-up (or "Finish your profile").
       allow create: if isOwner(uid)
