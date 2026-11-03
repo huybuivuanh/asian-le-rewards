@@ -6,6 +6,7 @@ import { DefaultTheme, ThemeProvider } from "expo-router/react-navigation";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { View } from "react-native";
+import { OfflineBanner } from "@/components/OfflineBanner";
 import { AuthProvider, useAuth } from "@/features/auth/AuthProvider";
 import { PointsBanner } from "@/features/rewards/components/PointsBanner";
 import { colors } from "@/theme/colors";
@@ -81,6 +82,8 @@ function RootNavigator() {
 
       {/* "+42 points earned" on top of every screen while signed in */}
       {user && member && <PointsBanner uid={user.uid} />}
+
+      <OfflineBanner />
     </View>
   );
 }

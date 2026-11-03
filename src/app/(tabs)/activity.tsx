@@ -1,4 +1,5 @@
-// Points history: earned, redeemed and reversed, newest first. Updates live.
+// Points history: earned, redeemed and reversed, newest first, with the current
+// balance at the top. Updates live.
 import { ActivityIndicator, FlatList, Text, View } from "react-native";
 import { useAuth } from "@/features/auth/AuthProvider";
 import { TransactionRow } from "@/features/rewards/components/TransactionRow";
@@ -6,7 +7,7 @@ import { useTransactions } from "@/features/rewards/useTransactions";
 import { colors } from "@/theme/colors";
 
 export default function ActivityScreen() {
-  const { user } = useAuth();
+  const { user, member } = useAuth();
   const { transactions, error } = useTransactions(user?.uid);
 
   return (
@@ -19,7 +20,25 @@ export default function ActivityScreen() {
       renderItem={({ item }) => <TransactionRow transaction={item} />}
       ItemSeparatorComponent={() => <View className="h-px bg-zinc-100" />}
       ListHeaderComponent={
-        <Text className="pb-2 text-[28px] font-bold text-zinc-950">Activity</Text>
+        <View className="flex-row items-end justify-between gap-4 pb-2">
+          <Text className="text-[28px] font-bold text-zinc-950">Activity</Text>
+          {/* Current balance — live, same as the Home card */}
+          {member ? (
+            <View
+              className="items-end"
+              accessible
+              accessibilityLabel={`Current balance: ${member.points} points`}
+            >
+              <Text className="text-[13px] text-zinc-500">Current balance</Text>
+              <Text
+                className="text-[20px] font-bold text-brand"
+                style={{ fontVariant: ["tabular-nums"] }}
+              >
+                {member.points.toLocaleString()} pts
+              </Text>
+            </View>
+          ) : null}
+        </View>
       }
       ListEmptyComponent={
         <View className="flex-1 items-center justify-center gap-2 py-20">
