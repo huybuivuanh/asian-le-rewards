@@ -6,7 +6,9 @@ import { DefaultTheme, ThemeProvider } from "expo-router/react-navigation";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { View } from "react-native";
+import { ForceUpdateScreen } from "@/components/ForceUpdateScreen";
 import { OfflineBanner } from "@/components/OfflineBanner";
+import { useForceUpdate } from "@/hooks/useForceUpdate";
 import { AuthProvider, useAuth } from "@/features/auth/AuthProvider";
 import { PointsBanner } from "@/features/rewards/components/PointsBanner";
 import { colors } from "@/theme/colors";
@@ -39,12 +41,22 @@ export default function RootLayout() {
 
 function RootNavigator() {
   const { user, member, loading } = useAuth();
+  const { updateRequired, updateUrl } = useForceUpdate(!!user);
 
   useEffect(() => {
     if (!loading) SplashScreen.hideAsync();
   }, [loading]);
 
   if (loading) return null;
+
+  if (updateRequired) {
+    return (
+      <View style={{ flex: 1 }}>
+        <ForceUpdateScreen updateUrl={updateUrl} />
+        <OfflineBanner />
+      </View>
+    );
+  }
 
   return (
     <View style={{ flex: 1 }}>

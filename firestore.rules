@@ -62,6 +62,13 @@ service cloud.firestore {
       }
     }
 
+    // App settings, e.g. appConfig/version for the force update check.
+    // Read-only for signed-in users; edited by hand in the Firebase console.
+    match /appConfig/{docId} {
+      allow read: if signedIn();
+      allow write: if false;
+    }
+
     // One doc per phone number, so a phone can belong to one member only.
     // Created together with members/{uid}. Writing over an existing one counts
     // as an update, which is denied, so a taken number can't be claimed again.
