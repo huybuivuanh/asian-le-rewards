@@ -49,6 +49,7 @@ functions/lib/
 # Firebase emulator logs
 *-debug.log
 firebase-debug.*.log
+.firebase/
 
 # Firebase admin keys (service accounts) - never commit
 *service-account*.json
