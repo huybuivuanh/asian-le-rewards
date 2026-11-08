@@ -1,13 +1,12 @@
-// members/{uid}/transactions: the points history, read-only for the app.
+// businesses/{businessId}/members/{uid}/transactions: the points history, read-only for the app.
 import {
-  collection,
   limit,
   onSnapshot,
   orderBy,
   query,
   type QueryDocumentSnapshot,
 } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { businessCol } from "@/lib/business";
 import type { Transaction } from "./types";
 
 /** New transactions older than this aren't announced (e.g. after reconnecting). */
@@ -15,7 +14,7 @@ const ANNOUNCE_WINDOW_MS = 10 * 60 * 1000;
 
 function transactionsQuery(uid: string, count: number) {
   return query(
-    collection(db, "members", uid, "transactions"),
+    businessCol("members", uid, "transactions"),
     orderBy("createdAt", "desc"),
     limit(count),
   );

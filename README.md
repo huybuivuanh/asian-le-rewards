@@ -14,7 +14,7 @@ Firebase project (Auth, Firestore, Cloud Functions).
 | App        | Expo SDK 58, React Native, Expo Router (file-based routes)      |
 | Styling    | NativeWind 4 (Tailwind 3)                                       |
 | Auth       | Firebase Auth: email + password, Google                         |
-| Data       | Cloud Firestore (live listeners), security rules in `firestore.rules` |
+| Data       | Cloud Firestore (live listeners) in the shared `asianlepos` project; rules in `asian-le-firebase` |
 | Backend    | Cloud Functions v2 (`functions/`), Node 22                      |
 | Builds     | EAS Build (`eas.json`)                                          |
 
@@ -87,11 +87,17 @@ functions/src/            Cloud Functions: deleteAccount, and the POS-only looku
 
 ## Data model
 
+Everything is inside a business (`EXPO_PUBLIC_BUSINESS_ID`, or the account's `businessId`
+claim — used by the App Store review account for the Demo business):
+
 ```
-members/{uid}                      name, email, phone, points, createdAt
-members/{uid}/transactions/{id}    earn_<orderId> | redeem_<orderId> | reverse_<orderId>
-phoneNumbers/{phone}               uid (one phone per member, used for POS lookup)
+businesses/{businessId}/members/{uid}                      name, email, phone, points, createdAt
+businesses/{businessId}/members/{uid}/transactions/{id}    earn_<orderId> | welcome_<orderId> | redeem_<orderId> | reverse_<orderId>
+businesses/{businessId}/phoneNumbers/{phone}               uid (one phone per member per business, used for POS lookup)
+appConfig/rewardsVersion                                   force update
 ```
 
-Points only change through Cloud Functions. See [PLAN.md](PLAN.md) for the full design,
+Points only change through Cloud Functions (codebase `rewards`). The POS functions take
+the business from the staff caller's claim. Test them with `npm --prefix functions run test`
+(emulators, needs Java 21). See [PLAN.md](PLAN.md) for the full design,
 decisions and roadmap.

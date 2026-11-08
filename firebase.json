@@ -1,7 +1,4 @@
 {
-  "firestore": {
-    "rules": "firestore.rules"
-  },
   "hosting": {
     "public": "dist",
     "predeploy": [
@@ -42,7 +39,7 @@
   "functions": [
     {
       "source": "functions",
-      "codebase": "default",
+      "codebase": "rewards",
       "ignore": [
         "node_modules",
         ".git",

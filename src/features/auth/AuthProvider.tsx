@@ -2,12 +2,13 @@ import { onAuthStateChanged, type User } from "firebase/auth";
 import { createContext, use, useEffect, useRef, useState, type ReactNode } from "react";
 import { deleteAccount as deleteAccountService, listenToMember } from "@/features/member/memberService";
 import type { Member } from "@/features/member/types";
+import { setBusinessForUser } from "@/lib/business";
 import { auth } from "@/lib/firebase";
 import { signOutUser, signUp as signUpService, type SignUpInput } from "./authService";
 
 type AuthContextValue = {
   user: User | null;
-  /** members/{uid}, live. `null` when signed out or the doc is missing. */
+  /** businesses/{id}/members/{uid}, live. `null` when signed out or the doc is missing. */
   member: Member | null;
   /** True until the saved login and (if signed in) the member doc have loaded. */
   loading: boolean;
@@ -34,15 +35,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // so "Finish your profile" doesn't flash before we sign out.
   const deletingRef = useRef(false);
 
-  useEffect(
-    () =>
-      onAuthStateChanged(auth, (firebaseUser) => {
-        setUser(firebaseUser);
-        if (!firebaseUser) setLoaded(null);
-        setAuthLoading(false);
-      }),
-    [],
-  );
+  useEffect(() => {
+    // Pick the business (claim or app default) before showing the user, so the member
+    // listener reads the right business. Only the latest auth event counts.
+    let latest = 0;
+    return onAuthStateChanged(auth, async (firebaseUser) => {
+      const run = ++latest;
+      await setBusinessForUser(firebaseUser);
+      if (run !== latest) return;
+      setUser(firebaseUser);
+      if (!firebaseUser) setLoaded(null);
+      setAuthLoading(false);
+    });
+  }, []);
 
   const uid = user?.uid;
   useEffect(() => {

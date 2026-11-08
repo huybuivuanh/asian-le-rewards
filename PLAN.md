@@ -1,5 +1,13 @@
 # Asian Le Rewards — Plan
 
+> **Update (2026-11, branch `firebase-merge`):** rewards is moving into the shared
+> `asianlepos` Firebase project. Data now lives under `businesses/{businessId}/members/…`
+> and `businesses/{businessId}/phoneNumbers/…`; the POS calls the functions with its staff
+> login (claims `{ businessId, role: "staff" | "admin" }`), so the `pos@asianle.ca` device
+> login, `role: pos` and `set-pos-role.mjs` are gone. Rules live in `D:\Projects\asian-le-firebase`.
+> Full plan: `D:\Projects\AsianLePOS\docs\firebase-merge-plan.md`. The sections below
+> describe the original separate-project design.
+
 Loyalty program for Asian Le. A separate customer app (this repo) with its own Firebase
 project. Customers see their points and a personal QR code. The POS (`D:\Projects\AsianLePOS`)
 scans the QR to collect and redeem points.

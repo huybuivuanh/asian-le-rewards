@@ -1,8 +1,9 @@
-// members/{uid}: create, listen, delete.
+// businesses/{businessId}/members/{uid}: create, listen, delete.
 import type { User } from "firebase/auth";
-import { doc, onSnapshot, Timestamp, writeBatch } from "firebase/firestore";
+import { onSnapshot, Timestamp, writeBatch } from "firebase/firestore";
 import { httpsCallable } from "firebase/functions";
 import { codedError, errorCode } from "@/lib/errors";
+import { businessDoc } from "@/lib/business";
 import { db, functions } from "@/lib/firebase";
 import { normalizePhone } from "./phone";
 import type { Member } from "./types";
@@ -10,8 +11,8 @@ import type { Member } from "./types";
 type MemberDetails = Pick<Member, "name" | "phone">;
 
 /**
- * Writes members/{uid} and reserves phoneNumbers/{phone} in one batch, so a phone
- * number belongs to one member only. The doc id is the Firebase Auth uid, and the
+ * Writes members/{uid} and reserves phoneNumbers/{phone} (both inside the current
+ * business) in one batch, so a phone number belongs to one member per business. The doc id is the Firebase Auth uid, and the
  * email comes from the login (security rules require both).
  */
 export async function createMember(user: User, { name, phone }: MemberDetails): Promise<Member> {
@@ -28,8 +29,8 @@ export async function createMember(user: User, { name, phone }: MemberDetails): 
   };
 
   const batch = writeBatch(db);
-  batch.set(doc(db, "members", user.uid), member);
-  batch.set(doc(db, "phoneNumbers", digits), { uid: user.uid });
+  batch.set(businessDoc("members", user.uid), member);
+  batch.set(businessDoc("phoneNumbers", digits), { uid: user.uid });
   try {
     await batch.commit();
   } catch (error) {
@@ -50,13 +51,13 @@ export function listenToMember(
   onError: (error: Error) => void,
 ): () => void {
   return onSnapshot(
-    doc(db, "members", uid),
+    businessDoc("members", uid),
     (snap) => onChange(snap.exists() ? (snap.data() as Member) : null),
     onError,
   );
 }
 
-/** Deletes the member, their history, phone reservation and login (Cloud Function). */
+/** Deletes the member (in every business), their history, phone reservations and login (Cloud Function). */
 export async function deleteAccount(): Promise<void> {
   await httpsCallable(functions, "deleteAccount")();
 }

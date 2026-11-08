@@ -13,12 +13,24 @@ export const MAX_REWARD_STEPS = 20;
 export const WELCOME_BONUS_POINTS = 200;
 export const WELCOME_BONUS_MIN_SUBTOTAL = 15;
 
-/** POS-only functions: the caller must be the POS login with the `role: "pos"` claim. */
-export function requirePos(request: CallableRequest): void {
+const STAFF_ROLES = ["staff", "admin"];
+
+/**
+ * Staff-only functions (POS, Orders app): the caller needs custom claims
+ * { businessId, role: "staff" | "admin" }. Returns the caller's business id.
+ * The business always comes from the claim, never from the request, so staff
+ * can only reach their own business's members.
+ */
+export function requireStaff(request: CallableRequest): string {
   if (!request.auth) throw new HttpsError("unauthenticated", "Sign in first.");
-  if (request.auth.token.role !== "pos") {
-    throw new HttpsError("permission-denied", "Only the POS can do this.");
+  const { businessId, role } = request.auth.token;
+  if (typeof role !== "string" || !STAFF_ROLES.includes(role)) {
+    throw new HttpsError("permission-denied", "Only staff can do this.");
   }
+  if (typeof businessId !== "string" || !businessId || businessId.includes("/")) {
+    throw new HttpsError("permission-denied", "This account isn't linked to a business.");
+  }
+  return businessId;
 }
 
 /** A Firestore doc id: non-empty, no slashes. */
@@ -37,6 +49,10 @@ export function normalizePhone(value: unknown): string | null {
   return digits.length === 10 ? digits : null;
 }
 
-export const memberRef = (uid: string) => db().doc(`members/${uid}`);
-export const transactionRef = (uid: string, id: string) =>
-  db().doc(`members/${uid}/transactions/${id}`);
+// All rewards data lives inside a business: businesses/{businessId}/members/…
+export const memberRef = (businessId: string, uid: string) =>
+  db().doc(`businesses/${businessId}/members/${uid}`);
+export const transactionRef = (businessId: string, uid: string, id: string) =>
+  db().doc(`businesses/${businessId}/members/${uid}/transactions/${id}`);
+export const phoneRef = (businessId: string, phone: string) =>
+  db().doc(`businesses/${businessId}/phoneNumbers/${phone}`);

@@ -1,29 +1,36 @@
 import { getAuth } from "firebase-admin/auth";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
-import { db } from "./shared.js";
+import { db, phoneRef } from "./shared.js";
 
 /**
  * Customer deletes their own account (required by the App Store).
- * Deletes members/{uid} with its transactions, frees phoneNumbers/{phone},
- * then deletes the login. Safe to call again if a previous call stopped halfway.
+ * A customer can be a member of several businesses, so this finds every
+ * businesses/{id}/members/{uid} (collection group query on `id`), deletes each with
+ * its transactions, frees that business's phoneNumbers/{phone}, then deletes the
+ * login. Safe to call again if a previous call stopped halfway.
  */
 export const deleteAccount = onCall(async (request) => {
   const uid = request.auth?.uid;
   if (!uid) throw new HttpsError("unauthenticated", "Sign in first.");
 
-  const memberRef = db().doc(`members/${uid}`);
-  const member = await memberRef.get();
-  const phone = member.get("phone") as string | undefined;
+  const memberships = await db().collectionGroup("members").where("id", "==", uid).get();
 
-  // Free the phone number, but only if it's really this member's.
-  if (phone) {
-    const phoneRef = db().doc(`phoneNumbers/${phone}`);
-    const phoneDoc = await phoneRef.get();
-    if (phoneDoc.get("uid") === uid) await phoneRef.delete();
+  for (const member of memberships.docs) {
+    // businesses/{businessId}/members/{uid}
+    const businessId = member.ref.parent.parent?.id;
+    if (!businessId || member.id !== uid) continue;
+
+    // Free the phone number, but only if it's really this member's.
+    const phone = member.get("phone") as string | undefined;
+    if (phone) {
+      const ref = phoneRef(businessId, phone);
+      const phoneDoc = await ref.get();
+      if (phoneDoc.get("uid") === uid) await ref.delete();
+    }
+
+    // The member doc and everything under it (transactions).
+    await db().recursiveDelete(member.ref);
   }
-
-  // The member doc and everything under it (transactions).
-  await db().recursiveDelete(memberRef);
 
   try {
     await getAuth().deleteUser(uid);

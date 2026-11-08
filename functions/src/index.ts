@@ -1,4 +1,4 @@
-// Cloud Functions for the loyalty project.
+// Rewards Cloud Functions (codebase "rewards" in the shared asianlepos project).
 import { initializeApp } from "firebase-admin/app";
 
 initializeApp();

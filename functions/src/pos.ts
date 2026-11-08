@@ -1,4 +1,5 @@
-// Functions the POS calls. Every one requires the POS login (role: "pos").
+// Functions the POS (and Orders app) call. Every one requires a staff login
+// ({ businessId, role: "staff" | "admin" }) and only touches that business.
 // Each order earns once and redeems once: transaction ids earn_<orderId> /
 // redeem_<orderId> / reverse_<orderId> make every call safe to retry.
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
@@ -11,7 +12,8 @@ import {
   POINTS_PER_DOLLAR,
   POINTS_PER_REWARD,
   requireId,
-  requirePos,
+  phoneRef,
+  requireStaff,
   REWARD_DOLLARS,
   transactionRef,
   WELCOME_BONUS_MIN_SUBTOTAL,
@@ -22,7 +24,7 @@ type MemberSummary = { uid: string; name: string; phone: string; points: number 
 
 /** Find a member by QR (uid) or by phone number. Input: { uid } or { phone }. */
 export const lookupMember = onCall(async (request): Promise<{ member: MemberSummary }> => {
-  requirePos(request);
+  const bid = requireStaff(request);
   const { uid: rawUid, phone: rawPhone } = (request.data ?? {}) as {
     uid?: unknown;
     phone?: unknown;
@@ -34,12 +36,12 @@ export const lookupMember = onCall(async (request): Promise<{ member: MemberSumm
   } else {
     const phone = normalizePhone(rawPhone);
     if (!phone) throw new HttpsError("invalid-argument", "Enter a 10-digit phone number.");
-    const phoneDoc = await db().doc(`phoneNumbers/${phone}`).get();
+    const phoneDoc = await phoneRef(bid, phone).get();
     if (!phoneDoc.exists) throw new HttpsError("not-found", "No member with this phone number.");
     uid = phoneDoc.get("uid") as string;
   }
 
-  const snap = await memberRef(uid).get();
+  const snap = await memberRef(bid, uid).get();
   if (!snap.exists) throw new HttpsError("not-found", "Member not found.");
   const m = snap.data() as { name: string; phone: string; points: number };
   return { member: { uid, name: m.name, phone: m.phone, points: m.points ?? 0 } };
@@ -55,7 +57,7 @@ export const lookupMember = onCall(async (request): Promise<{ member: MemberSumm
  * order is cancelled, reverseOrder clears it so the next order counts as the first.
  */
 export const earnPoints = onCall(async (request) => {
-  requirePos(request);
+  const bid = requireStaff(request);
   const data = (request.data ?? {}) as { uid?: unknown; orderId?: unknown; subtotal?: unknown };
   const uid = requireId(data.uid, "uid");
   const orderId = requireId(data.orderId, "orderId");
@@ -72,9 +74,9 @@ export const earnPoints = onCall(async (request) => {
   const points = Math.floor(subtotal * POINTS_PER_DOLLAR + 1e-9);
 
   return db().runTransaction(async (tx) => {
-    const mRef = memberRef(uid);
-    const tRef = transactionRef(uid, `earn_${orderId}`);
-    const bRef = transactionRef(uid, `welcome_${orderId}`);
+    const mRef = memberRef(bid, uid);
+    const tRef = transactionRef(bid, uid, `earn_${orderId}`);
+    const bRef = transactionRef(bid, uid, `welcome_${orderId}`);
     const [member, existing, existingBonus] = await Promise.all([
       tx.get(mRef),
       tx.get(tRef),
@@ -123,7 +125,7 @@ export const earnPoints = onCall(async (request) => {
  * Input: { uid, orderId, steps }. Returns the dollar discount for the POS to apply.
  */
 export const redeemPoints = onCall(async (request) => {
-  requirePos(request);
+  const bid = requireStaff(request);
   const data = (request.data ?? {}) as { uid?: unknown; orderId?: unknown; steps?: unknown };
   const uid = requireId(data.uid, "uid");
   const orderId = requireId(data.orderId, "orderId");
@@ -143,8 +145,8 @@ export const redeemPoints = onCall(async (request) => {
   const discount = steps * REWARD_DOLLARS;
 
   return db().runTransaction(async (tx) => {
-    const mRef = memberRef(uid);
-    const tRef = transactionRef(uid, `redeem_${orderId}`);
+    const mRef = memberRef(bid, uid);
+    const tRef = transactionRef(bid, uid, `redeem_${orderId}`);
     const [member, existing] = await Promise.all([tx.get(mRef), tx.get(tRef)]);
     if (!member.exists) throw new HttpsError("not-found", "Member not found.");
     const balance = (member.get("points") as number) ?? 0;
@@ -182,19 +184,19 @@ export const redeemPoints = onCall(async (request) => {
  * already spent, only what's left is removed (the record shows what was applied).
  */
 export const reverseOrder = onCall(async (request) => {
-  requirePos(request);
+  const bid = requireStaff(request);
   const data = (request.data ?? {}) as { uid?: unknown; orderId?: unknown };
   const uid = requireId(data.uid, "uid");
   const orderId = requireId(data.orderId, "orderId");
 
   return db().runTransaction(async (tx) => {
-    const mRef = memberRef(uid);
-    const rRef = transactionRef(uid, `reverse_${orderId}`);
+    const mRef = memberRef(bid, uid);
+    const rRef = transactionRef(bid, uid, `reverse_${orderId}`);
     const [member, earned, bonus, redeemed, existing] = await Promise.all([
       tx.get(mRef),
-      tx.get(transactionRef(uid, `earn_${orderId}`)),
-      tx.get(transactionRef(uid, `welcome_${orderId}`)),
-      tx.get(transactionRef(uid, `redeem_${orderId}`)),
+      tx.get(transactionRef(bid, uid, `earn_${orderId}`)),
+      tx.get(transactionRef(bid, uid, `welcome_${orderId}`)),
+      tx.get(transactionRef(bid, uid, `redeem_${orderId}`)),
       tx.get(rRef),
     ]);
     if (!member.exists) throw new HttpsError("not-found", "Member not found.");

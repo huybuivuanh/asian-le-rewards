@@ -24,9 +24,9 @@ function isVersionLower(current: string, min: string): boolean {
 }
 
 /**
- * Same as the POS app: watches `appConfig/version` in Firestore and reports when
- * this build is older than `minVersion`. Runs only while signed in (the rules
- * only allow signed-in reads). Live, so an update pushed mid-session applies
+ * Same as the POS app: watches `appConfig/rewardsVersion` in Firestore (top level,
+ * one doc per app) and reports when this build is older than `minVersion`. Runs only
+ * while signed in. Live, so an update pushed mid-session applies
  * without a relaunch. Web is skipped since it always serves the latest build.
  */
 export function useForceUpdate(enabled: boolean) {
@@ -34,7 +34,7 @@ export function useForceUpdate(enabled: boolean) {
 
   useEffect(() => {
     if (!enabled || Platform.OS === "web") return;
-    const ref = doc(db, "appConfig", "version");
+    const ref = doc(db, "appConfig", "rewardsVersion");
     return onSnapshot(
       ref,
       (snap) => setConfig((snap.data() as UpdateConfig | undefined) ?? null),
