@@ -5,15 +5,42 @@ import {
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signOut,
+  type User,
 } from "firebase/auth";
+import { codedError } from "@/lib/errors";
 import { auth } from "@/lib/firebase";
 import { createMember } from "@/features/member/memberService";
-import { signOutGoogle } from "./googleSignIn";
+import { signInWithGoogle as googleSignIn, signOutGoogle } from "./googleSignIn";
 
-export { signInWithGoogle } from "./googleSignIn";
+/**
+ * True for POS / admin accounts (they have a `role` claim; customers have none). Staff
+ * can't be rewards members with their work login — the security rules refuse it too.
+ */
+export async function isStaffAccount(user: User): Promise<boolean> {
+  try {
+    return "role" in (await user.getIdTokenResult()).claims;
+  } catch {
+    return false; // offline: the rules still refuse staff
+  }
+}
+
+/** Signs a staff account straight back out with a clear message. */
+async function refuseStaff(user: User): Promise<void> {
+  if (!(await isStaffAccount(user))) return;
+  await signOutUser();
+  throw codedError("auth/staff-account", "Staff account.");
+}
 
 export async function signIn(email: string, password: string): Promise<void> {
-  await signInWithEmailAndPassword(auth, email.trim(), password);
+  const { user } = await signInWithEmailAndPassword(auth, email.trim(), password);
+  await refuseStaff(user);
+}
+
+/** Returns false if the customer closed the Google sheet. */
+export async function signInWithGoogle(): Promise<boolean> {
+  const signedIn = await googleSignIn();
+  if (signedIn && auth.currentUser) await refuseStaff(auth.currentUser);
+  return signedIn;
 }
 
 export type SignUpInput = { name: string; phone: string; email: string; password: string };

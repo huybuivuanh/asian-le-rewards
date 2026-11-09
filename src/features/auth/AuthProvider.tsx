@@ -4,7 +4,7 @@ import { deleteAccount as deleteAccountService, listenToMember } from "@/feature
 import type { Member } from "@/features/member/types";
 import { setBusinessForUser } from "@/lib/business";
 import { auth } from "@/lib/firebase";
-import { signOutUser, signUp as signUpService, type SignUpInput } from "./authService";
+import { isStaffAccount, signOutUser, signUp as signUpService, type SignUpInput } from "./authService";
 
 type AuthContextValue = {
   user: User | null;
@@ -41,6 +41,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let latest = 0;
     return onAuthStateChanged(auth, async (firebaseUser) => {
       const run = ++latest;
+      // Staff / admin logins can't use rewards (sign-in shows why); never show them.
+      if (firebaseUser && (await isStaffAccount(firebaseUser))) {
+        if (run === latest) await signOutUser();
+        return;
+      }
       await setBusinessForUser(firebaseUser);
       if (run !== latest) return;
       setUser(firebaseUser);

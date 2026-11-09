@@ -19,6 +19,8 @@ const MESSAGES: Record<string, string> = {
   "auth/popup-blocked": "Your browser blocked the Google window. Allow pop-ups and try again.",
   "google/expo-go": "Google sign-in doesn't work in Expo Go. Use email, or a development build.",
   "member/phone-taken": "This phone number is already used by another account.",
+  "auth/staff-account":
+    "This is a staff account. To collect points, sign in or sign up with a personal account.",
   "member/invalid-phone": PHONE_ERROR,
   "google/play-services": "Google Play services is missing or out of date on this device.",
 };
