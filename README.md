@@ -4,8 +4,14 @@ Customer loyalty app for Asian Le. Customers sign up, see their points balance a
 personal QR code, and follow their points history. Staff scan the QR at the POS to earn
 and redeem points.
 
-Runs on **iOS, Android and web** from one Expo codebase. The backend is a dedicated
-Firebase project (Auth, Firestore, Cloud Functions).
+Runs on **iOS, Android and web** from one Expo codebase. The backend is the shared
+`asianlepos` Firebase project (Auth, Firestore, Cloud Functions), the same one the POS,
+Orders app and website use. The web build is hosted on the `asianle-rewards` Firebase
+Hosting site (rewards.asianle.ca).
+
+Rewards is for customers only. Staff and admin logins (any account with a `role` claim) are
+signed straight back out with a message asking them to use a personal account. The
+security rules refuse them too.
 
 ## Tech stack
 
@@ -41,6 +47,9 @@ Google sign-in uses a native module, so on iOS and Android it needs a developmen
 
 Cloud Functions (from `functions/`): `npm run build`, `npm run serve` (emulators),
 `npm run deploy`.
+
+Web hosting: `firebase deploy --only hosting` builds the web app (`npm run build:web`) and
+deploys `dist/` to the `asianle-rewards` site in `asianlepos`.
 
 ## Project structure
 
