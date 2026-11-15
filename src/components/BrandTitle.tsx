@@ -3,8 +3,13 @@ import { Text, View } from "react-native";
 
 // The logo is tall (56×104), so it stands a little taller than the text.
 const SIZES = {
-  large: { text: "text-[28px]", gap: "gap-1.5", logo: { width: 28, height: 52 } },
-  small: { text: "text-[20px]", gap: "gap-1", logo: { width: 20, height: 37 } },
+  large: { text: "text-[28px] font-bold text-zinc-950", gap: "gap-1.5", logo: { width: 28, height: 52 } },
+  // Web header: light extrabold text on the dark bar, like the website's logo.
+  small: {
+    text: "text-[20px] font-extrabold tracking-wide text-on-ink",
+    gap: "gap-1",
+    logo: { width: 22, height: 40 },
+  },
 };
 
 type Props = {
@@ -22,13 +27,13 @@ export function BrandTitle({ size = "large" }: Props) {
       accessibilityRole="header"
       accessibilityLabel="Asian Le Rewards"
     >
-      <Text className={`${s.text} font-bold text-zinc-950`}>Asian</Text>
+      <Text className={s.text}>Asian</Text>
       <Image
         source={require("../../assets/images/logo.png")}
         style={s.logo}
         contentFit="contain"
       />
-      <Text className={`${s.text} font-bold text-zinc-950`}>Le Rewards</Text>
+      <Text className={s.text}>Le Rewards</Text>
     </View>
   );
 }

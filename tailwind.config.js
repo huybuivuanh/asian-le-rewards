@@ -11,6 +11,12 @@ module.exports = {
     extend: {
       colors: {
         brand: colors.brand,
+        ink: colors.ink,
+        "ink-raised": colors.inkRaised,
+        "ink-line": colors.inkLine,
+        "on-ink": colors.onInk,
+        "on-ink-muted": colors.onInkMuted,
+        gold: colors.gold,
       },
     },
   },

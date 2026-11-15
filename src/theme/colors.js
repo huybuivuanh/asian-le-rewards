@@ -7,6 +7,13 @@ const colors = {
   text: "#18181B", // zinc-900
   muted: "#71717A", // zinc-500
   placeholder: "#A1A1AA", // zinc-400
+  // Dark header, same values as the Asian Le website's nav.
+  ink: "#141210",
+  inkRaised: "#1d1a17",
+  inkLine: "#2e2925",
+  onInk: "#f3eee6",
+  onInkMuted: "#b8b0a4",
+  gold: "#d4b26a",
 };
 
 module.exports = { colors };
