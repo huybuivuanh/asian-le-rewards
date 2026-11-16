@@ -10,6 +10,9 @@
          iPhone customers use the App Store app. -->
     <link rel="manifest" href="/manifest.webmanifest" />
     <meta name="theme-color" content="#1C1611" />
+    <!-- Safari on iPhone/iPad shows its own "Open / Get" bar for the App Store app.
+         Other iOS browsers ignore it; src/components/AppStoreBanner.tsx covers those. -->
+    <meta name="apple-itunes-app" content="app-id=6828595669" />
     <!-- The `react-native-web` recommended style reset: https://necolas.github.io/react-native-web/docs/setup/#root-element -->
     <style id="expo-reset">
       /* These styles make the body full-height */

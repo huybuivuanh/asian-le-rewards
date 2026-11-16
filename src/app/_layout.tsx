@@ -6,6 +6,7 @@ import { DefaultTheme, ThemeProvider } from "expo-router/react-navigation";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { View } from "react-native";
+import { AppStoreBanner } from "@/components/AppStoreBanner";
 import { ForceUpdateScreen } from "@/components/ForceUpdateScreen";
 import { OfflineBanner } from "@/components/OfflineBanner";
 import { useForceUpdate } from "@/hooks/useForceUpdate";
@@ -60,6 +61,9 @@ function RootNavigator() {
 
   return (
     <View style={{ flex: 1 }}>
+      {/* iPhone/iPad web only: points to the App Store app */}
+      <AppStoreBanner />
+
       <Stack
         screenOptions={{
           headerBackButtonDisplayMode: "minimal",
